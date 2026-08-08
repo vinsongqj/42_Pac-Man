@@ -1,0 +1,8 @@
+*.whl
+*.dist-info/
+*.egg-info/
+build/
+dist/
+venv
+.venv
+env
