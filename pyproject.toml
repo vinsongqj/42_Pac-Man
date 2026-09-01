@@ -1,0 +1,26 @@
+[project]
+name = "42-pac-man"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "vgoh" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "flake8>=7.3.0",
+    "mazegenerator",
+    "mypy>=2.3.1",
+    "pygame>=2.6.1",
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+42-pac-man = "42_pac_man:main"
+
+[build-system]
+requires = ["uv_build>=0.12.6,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+mazegenerator = { path = "mazegenerator-2.1.0-py3-none-any.whl" }
