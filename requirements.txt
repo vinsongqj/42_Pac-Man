@@ -1,4 +1,0 @@
-pygame>=2.5.0
-flake8>=6.0.0
-mypy>=1.0.0
-./mazegenerator-2.1.0-py3-none-any.whl
