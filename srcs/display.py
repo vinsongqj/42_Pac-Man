@@ -193,19 +193,41 @@ class Image(Element):
         - smooth: Whether to use anti-aliasing. Defaults to True.
         """
 
-        if not os.path.exists(image_path):
-            image: pygame.Surface = pygame.Surface((50, 50))
-            image.fill((255, 0, 128))  # placeholder if no image
-        else:
-            if image_path.lower().endswith(".png"):
-                image = pygame.image.load(image_path).convert_alpha()
-            else:
-                image = pygame.image.load(image_path).convert()
-
-            if scale_size is not None:
-                if smooth:
-                    image = pygame.transform.smoothscale(image, scale_size)
-                else:
-                    image = pygame.transform.scale(image, scale_size)
-
+        image = self.load_surface(image_path, scale_size, smooth)
         super().__init__(image, pos, anchor)
+
+    @staticmethod
+    def load_surface(
+            image_path: str,
+            scale_size: Optional[tuple[int, int]] = None,
+            smooth: bool = True) -> pygame.Surface:
+        """
+        Loads a surface from disk (or builds a placeholder square if the
+        path doesn't exist), optionally scaling it. Split out from
+        __init__ so other classes (e.g. animated sprites that swap
+        frames at runtime) can reuse the exact same loading/placeholder
+        behavior instead of duplicating it.
+
+        Args:
+        - image_path: The file path to the image.
+        - scale_size: Optional target size to scale the image.
+        - smooth: Whether to use anti-aliasing when scaling.
+        """
+        if not os.path.exists(image_path):
+            size = scale_size if scale_size is not None else (50, 50)
+            surface: pygame.Surface = pygame.Surface(size)
+            surface.fill((255, 0, 128))  # placeholder if no image
+            return surface
+
+        if image_path.lower().endswith(".png"):
+            surface = pygame.image.load(image_path).convert_alpha()
+        else:
+            surface = pygame.image.load(image_path).convert()
+
+        if scale_size is not None:
+            if smooth:
+                surface = pygame.transform.smoothscale(surface, scale_size)
+            else:
+                surface = pygame.transform.scale(surface, scale_size)
+
+        return surface

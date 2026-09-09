@@ -1,65 +1,53 @@
 import sys
 import pygame
-from srcs import display
+from srcs.screens import AppState, ScreenManager
+from srcs.mainmenu import MenuScreen, WIDTH, HEIGHT
+from srcs.gameplayscreen import GameplayScreen
 
-# Starts the engine
-pygame.init()
+FPS = 30
 
-# Sets window dimensions
-WIDTH = 900
-HEIGHT = 1000
-screen = pygame.display.set_mode([WIDTH, HEIGHT])
-pygame.display.set_caption("42 Pac-Man")
 
-screen_rect = screen.get_rect()
-timer = pygame.time.Clock()
-fps = 60
+def main() -> None:
+    pygame.init()
+    pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("42 Pac-Man")
 
-title_text = display.Text(
-    text="PAC-MAN",
-    font_size=100,
-    color="Yellow",
-    pos=(screen_rect.centerx, 100),
-    anchor="midtop"
-)
+    screens = {
+        AppState.MENU: MenuScreen(),
+        AppState.PLAYING: GameplayScreen(),
+    }
+    manager = ScreenManager(screens, start=AppState.MENU)
+    screen = pygame.display.set_mode(manager.current_screen.screen_size())
+    clock = pygame.time.Clock()
 
-subtitle_text = display.Text(
-    text="PRESS SPACE TO START",
-    font_size=28,
-    color=(255, 255, 255),
-    pos=(screen_rect.centerx, 800),
-    anchor="center",
-    fade_speed=0.003
-)
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            else:
+                manager.handle_event(event)
 
-score_text = display.Text(
-    text="SCORE: 0",
-    font_size=24,
-    color="White",
-    pos=(20, 20),
-    anchor="topleft"
-)
+        if manager.current_state == AppState.QUIT:
+            running = False
+            continue
 
-pacman = display.Image(
-    image_path="assets/images/main_menu/pacman.png",
-    pos=(screen_rect.centerx, 550),
-    anchor="center"
-    )
+        manager.update()
+        if manager.current_state == AppState.QUIT:
+            running = False
+            continue
 
-run = True
+        desired_size = manager.current_screen.screen_size()
+        if screen.get_size() != desired_size:
+            screen = pygame.display.set_mode(desired_size)
 
-while run:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
+        manager.draw(screen)
+        pygame.display.flip()
+        clock.tick(FPS)
 
-    subtitle_text.fade()
-    screen.fill('black')
-    pacman.draw(screen)
-    title_text.draw(screen)
-    subtitle_text.draw(screen)
-    score_text.draw(screen)
-    pygame.display.flip()
-    timer.tick(fps)
-pygame.quit()
-sys.exit()
+    pygame.quit()
+    sys.exit()
+
+
+if __name__ == "__main__":
+    main()
