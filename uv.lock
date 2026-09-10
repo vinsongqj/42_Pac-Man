@@ -9,7 +9,7 @@ resolution-markers = [
 [[package]]
 name = "42-pac-man"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "flake8" },
     { name = "mazegenerator" },

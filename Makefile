@@ -3,10 +3,10 @@
 
 install:
 	@echo "Installing dependencies..."
-	@pip install -q -r requirements.txt
+	@uv sync
 	@echo "Dependencies installed!"
 run:
-	python3 pac-man.py config.json
+	uv run pac-man.py config.json
 
 debug:
 	python3 -m pdb pac-man.py config.json
@@ -28,8 +28,3 @@ help:
 	@echo "   clean       - Remove all build files"
 	@echo "   lint        - Run flake8 and mypy linters"
 	@echo ""
-	@echo "First time setup:"
-	@echo "   1. python3 -m venv venv"
-	@echo "   2. source venv/bin/activate"
-	@echo "   3. make install"
-	@echo "   4. make run"

@@ -1,15 +1,15 @@
 import sys
 import pygame
-from srcs.screens import AppState, ScreenManager
-from srcs.mainmenu import MenuScreen, WIDTH, HEIGHT
-from srcs.gameplayscreen import GameplayScreen
+from src.screen_utils import AppState, ScreenManager
+from src.screens import MenuScreen, GameplayScreen, MENU_WIDTH, MENU_HEIGHT
+
 
 FPS = 30
 
 
 def main() -> None:
     pygame.init()
-    pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_mode((MENU_WIDTH, MENU_HEIGHT))
     pygame.display.set_caption("42 Pac-Man")
 
     screens = {
