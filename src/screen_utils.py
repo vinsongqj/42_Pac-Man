@@ -35,21 +35,21 @@ class ScreenManager:
                  screens: dict[AppState, Screen],
                  start: AppState) -> None:
         self.screens = screens
-        self.current_state: AppState = start
+        self.current_state = start
         self.current_screen = screens[start]
         self.current_screen.on_enter()
 
     def switch_to(self, state: AppState, **kwargs: Any) -> None:
-        self.current_state: AppState = state
+        self.current_state = state
         if state == AppState.QUIT:
             return
         self.current_screen = self.screens[state]
         self.current_screen.on_enter(**kwargs)
 
     def handle_event(self, event: "pygame.event.Event") -> None:
-        next_state = self.current_screen.handle_event(event)
-        if next_state is not None:
-            self.switch_to(next_state)
+        next: Optional[AppState] = self.current_screen.handle_event(event)
+        if next is not None:
+            self.switch_to(next)
 
     def update(self) -> None:
         next_state = self.current_screen.update()

@@ -28,12 +28,14 @@ def main() -> None:
             else:
                 manager.handle_event(event)
 
-        if manager.current_state == AppState.QUIT:
+        state = manager.current_state
+        if state == AppState.QUIT:
             running = False
             continue
 
         manager.update()
-        if manager.current_state == AppState.QUIT:
+        state = manager.current_state
+        if state == AppState.QUIT:
             running = False
             continue
 

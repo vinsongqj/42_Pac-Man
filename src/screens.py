@@ -54,7 +54,7 @@ class MenuScreen(Screen):
     def screen_size(self) -> tuple[int, int]:
         return MENU_WIDTH, MENU_HEIGHT
 
-    def handle_event(self, event: "pygame.event.Event") -> AppState | None:
+    def handle_event(self, event: "pygame.event.Event") -> Optional[AppState]:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             return AppState.PLAYING
         return None
@@ -80,7 +80,7 @@ class GameplayScreen(Screen):
     def screen_size(self) -> tuple[int, int]:
         return self.game.screen_size
 
-    def handle_event(self, event: "pygame.event.Event") -> AppState | None:
+    def handle_event(self, event: "pygame.event.Event") -> Optional[AppState]:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 return AppState.QUIT
