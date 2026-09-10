@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, cast
 import pygame
 import src.constants as c
 from src.display import Image
@@ -30,11 +30,12 @@ class Sprite(Image):
         self._scale_size = scale_size or (c.CELL, c.CELL)
 
         if rotate_with_direction:
-            self.frame_paths: list[str] = frames
+            self.frame_paths: list[str] = cast(list[str], frames)
             self.direction = (direction if direction in DIRECTION_ANGLES
                               else "RIGHT")
         else:
-            self.frames: dict[str, list[str]] = frames
+            self.frames: dict[str, list[str]] = cast(dict[str, list[str]],
+                                                     frames)
             self.direction = (direction if direction in frames
                               else next(iter(frames)))
 

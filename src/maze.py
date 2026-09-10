@@ -1,6 +1,6 @@
 from collections import deque
 import random
-from mazegenerator import MazeGenerator
+from mazegenerator import MazeGenerator  # type: ignore[import-not-found]
 import src.constants as c
 
 
@@ -76,4 +76,4 @@ class Maze:
                 }[(dx, dy)]
         if not (0 <= x < self.width and 0 <= y < self.height):
             return False
-        return (self.maze[y][x] & code) == 0
+        return bool((self.maze[y][x] & code) == 0)

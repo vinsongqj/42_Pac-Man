@@ -41,7 +41,7 @@ class Layout:
         if hasattr(self.rect, self.anchor):
             setattr(self.rect, self.anchor, pos)
         else:
-            self.rect.topleft = pos
+            self.rect.topleft = (int(pos[0]), int(pos[1]))
 
     def update_surface(self,
                        new_surface: pygame.Surface) -> None:

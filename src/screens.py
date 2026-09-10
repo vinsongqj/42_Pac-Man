@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 import pygame
 import src.constants as c
 import src.display as display
@@ -21,7 +21,7 @@ MENU_HEIGHT = 1000
 
 
 class MenuScreen(Screen):
-    def on_enter(self, **kwargs) -> None:
+    def on_enter(self, **kwargs: Any) -> None:
         rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
         self.title_text = display.Text(
             text="PAC-MAN",
@@ -54,12 +54,12 @@ class MenuScreen(Screen):
     def screen_size(self) -> tuple[int, int]:
         return MENU_WIDTH, MENU_HEIGHT
 
-    def handle_event(self, event: "pygame.event.Event"):
+    def handle_event(self, event: "pygame.event.Event") -> AppState | None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             return AppState.PLAYING
         return None
 
-    def update(self):
+    def update(self) -> None:
         self.subtitle_text.fade()
         return None
 
@@ -72,7 +72,7 @@ class MenuScreen(Screen):
 
 
 class GameplayScreen(Screen):
-    def on_enter(self, **kwargs) -> None:
+    def on_enter(self, **kwargs: Any) -> None:
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
                      else GameState(size=(21, 21)))
@@ -80,7 +80,7 @@ class GameplayScreen(Screen):
     def screen_size(self) -> tuple[int, int]:
         return self.game.screen_size
 
-    def handle_event(self, event: "pygame.event.Event"):
+    def handle_event(self, event: "pygame.event.Event") -> AppState | None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 return AppState.QUIT
@@ -93,7 +93,7 @@ class GameplayScreen(Screen):
                 self.game.move_player(dx, dy)
         return None
 
-    def update(self):
+    def update(self) -> None:
         self.game.update()
         pygame.display.set_caption(
             f"Pac-Man Maze - Level {self.game.level_number} "
