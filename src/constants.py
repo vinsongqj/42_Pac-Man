@@ -35,10 +35,10 @@ PLAYER_SPRITE_FRAMES = [
 GHOST_NAMES = ["cyan", "red", "yellow", "pink"]
 GHOST_SPRITE_FRAMES = {
     name: {
-        "UP": [f"assets/images/sprites/ghosts/{name}/up.png"],
-        "DOWN": [f"assets/images/sprites/ghosts/{name}/down.png"],
-        "LEFT": [f"assets/images/sprites/ghosts/{name}/left.png"],
-        "RIGHT": [f"assets/images/sprites/ghosts/{name}/right.png"],
+        "UP": [f"assets/images/sprites/ghosts/default/{name}/up.png"],
+        "DOWN": [f"assets/images/sprites/ghosts/default/{name}/down.png"],
+        "LEFT": [f"assets/images/sprites/ghosts/default/{name}/left.png"],
+        "RIGHT": [f"assets/images/sprites/ghosts/default/{name}/right.png"],
     }
     for name in GHOST_NAMES
 }
