@@ -1,6 +1,6 @@
-from src.maze import Maze
-from src.sprites import Sprite
-import src.constants as c
+from src.client.maze import Maze
+from src.client.sprites import Sprite
+import src.client.constants as c
 import pygame
 
 # Player movement delta -> facing direction, for pointing the player

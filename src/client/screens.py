@@ -1,9 +1,9 @@
 from typing import Optional, Any
 import pygame
-import src.constants as c
-import src.display as display
-from src.game import GameState
-from src.screen_utils import AppState, Screen
+import src.client.constants as c
+import src.client.display as display
+from src.client.game import GameState
+from src.client.screen_utils import AppState, Screen
 
 MOVE_KEYS = {
     pygame.K_UP: (0, -1),

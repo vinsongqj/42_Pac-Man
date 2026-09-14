@@ -1,7 +1,7 @@
 from collections import deque
 import random
 from mazegenerator import MazeGenerator  # type: ignore[import-not-found]
-import src.constants as c
+import src.client.constants as c
 
 
 class Maze:

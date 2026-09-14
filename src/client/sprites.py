@@ -1,7 +1,7 @@
 from typing import Optional, Union, cast
 import pygame
-import src.constants as c
-from src.display import Image
+import src.client.constants as c
+from src.client.display import Image
 
 
 DIRECTION_ANGLES = {

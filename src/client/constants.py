@@ -46,13 +46,4 @@ GHOST_SPRITE_FRAMES = {
 GHOST_FRAME_INTERVAL = 6  # game ticks per ghost animation frame
 PLAYER_FRAME_INTERVAL = 4  # game ticks per player mouth-cycle frame
 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))       # .../project/srcs
-PROJECT_ROOT = os.path.dirname(BASE_DIR)                    # .../project
-
-
-def asset_path(*parts: str) -> str:
-    return os.path.join(PROJECT_ROOT, "assets", *parts)
-
-
-MAIN_MENU_PACMAN_IMAGE = asset_path("images", "main_menu", "pacman.png")
+MAIN_MENU_PACMAN_IMAGE = "assets/images/main_menu/pacman.png"

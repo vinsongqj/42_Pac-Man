@@ -1,7 +1,7 @@
 import sys
 import pygame
-from src.screen_utils import AppState, ScreenManager
-from src.screens import MenuScreen, GameplayScreen, MENU_WIDTH, MENU_HEIGHT
+from src.client.screen_utils import AppState, ScreenManager
+from src.client.screens import MenuScreen, GameplayScreen, MENU_WIDTH, MENU_HEIGHT
 
 
 FPS = 30
