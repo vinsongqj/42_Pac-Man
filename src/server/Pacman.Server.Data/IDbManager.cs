@@ -1,6 +1,6 @@
 namespace Pacman.Server.Data;
 
-interface IDbManager
+public interface IDbManager
 {
     public Task SaveChangesAsync();
 
