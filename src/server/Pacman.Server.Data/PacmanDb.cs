@@ -11,7 +11,11 @@ public class PacmanDb(DbContextOptions<PacmanDb> options) : DbContext(options)
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<User>()
-            .HasIndex(p => p.Name)
+            .HasIndex(u => u.Name)
             .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.Id)
+            .ValueGeneratedNever();
     }
 }
