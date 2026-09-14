@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="Pacman.Server.Api/Pacman.Server.Api.csproj" />
-  <Project Path="Pacman.Server.Core/Pacman.Server.Core.csproj" />
-  <Project Path="Pacman.Server.Data/Pacman.Server.Data.csproj" />
-</Solution>
