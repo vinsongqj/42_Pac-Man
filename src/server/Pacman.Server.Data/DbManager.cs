@@ -2,7 +2,7 @@
 
 namespace Pacman.Server.Data;
 
-public class DbManager
+public class DbManager : IDbManager
 {
     private readonly PacmanDb _context;
 
