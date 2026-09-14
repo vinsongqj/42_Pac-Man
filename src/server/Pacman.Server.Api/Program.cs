@@ -23,6 +23,8 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapGet("/user", (Guid id) =>
 {
