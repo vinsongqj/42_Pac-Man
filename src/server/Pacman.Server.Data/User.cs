@@ -1,9 +1,11 @@
-class User
+namespace Pacman.Server.Data;
+
+public class User(string name, string password)
 {
     public Guid     Id {get; private set;}
-    public string   Name {get; private set;} = null!;
-    public string   Password {get; private set;} = null!;
-    public int      BestScore {get; private set;}
+    public string   Name {get; private set;} = name;
+    public string   Password {get; private set;} = password;
+    public int      BestScore {get; private set;} = 0;
 
     public bool TryUpdateBestScore(int newScore)
     {
