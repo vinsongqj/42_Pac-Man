@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/alexhysel/Projects/42_Pac-Man/server/Pacman.Server.Data/Pacman.Server.Data.csproj": {}
+    "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Data/Pacman.Server.Data.csproj": {}
   },
   "projects": {
-    "/home/alexhysel/Projects/42_Pac-Man/server/Pacman.Server.Data/Pacman.Server.Data.csproj": {
+    "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Data/Pacman.Server.Data.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/alexhysel/Projects/42_Pac-Man/server/Pacman.Server.Data/Pacman.Server.Data.csproj",
+        "projectUniqueName": "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Data/Pacman.Server.Data.csproj",
         "projectName": "Pacman.Server.Data",
-        "projectPath": "/home/alexhysel/Projects/42_Pac-Man/server/Pacman.Server.Data/Pacman.Server.Data.csproj",
+        "projectPath": "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Data/Pacman.Server.Data.csproj",
         "packagesPath": "/home/alexhysel/.nuget/packages/",
-        "outputPath": "/home/alexhysel/Projects/42_Pac-Man/server/Pacman.Server.Data/obj/",
+        "outputPath": "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Data/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/alexhysel/.nuget/NuGet/NuGet.Config"
@@ -43,6 +43,12 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[10.0.3, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
