@@ -28,12 +28,12 @@ app.UseHttpsRedirection();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapGet("/user", (Guid id) =>
+app.MapGet("/user", (Guid id, Orchestrator o) =>
 {
     
 });
 
-app.MapPut("/user", (Guid id, int newScore) =>
+app.MapPut("/user", (Guid id, int newScore, Orchestrator o) =>
 {
 
 });
@@ -43,12 +43,12 @@ app.MapPost("/signup", (string name, string password, Orchestrator o) =>
 
 });
 
-app.MapGet("/login", (string name, string password) =>
+app.MapGet("/login", (string name, string password, Orchestrator o) =>
 {
 
 });
 
-app.MapGet("/leaderboard", (int size) =>
+app.MapGet("/leaderboard", (int size, Orchestrator o) =>
 {
 
 });
