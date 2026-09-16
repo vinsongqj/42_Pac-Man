@@ -173,6 +173,15 @@ class Image(Element):
     """
     The class that handles importing and rendering image elements.
     """
+    # Cache of surfaces already loaded from disk, keyed by the exact
+    # (path, scale, smoothing) used to build them. Sprites that swap
+    # between a handful of frames (walking animation, direction
+    # changes) call load_surface repeatedly with the same arguments,
+    # so without this every such swap would re-read and re-decode the
+    # file from disk -- a synchronous, unpredictably-timed cost that
+    # shows up as intermittent stutter right when a sprite changes.
+    _surface_cache: dict[tuple, pygame.Surface] = {}
+
     def __init__(
             self,
             image_path: str,
@@ -196,16 +205,19 @@ class Image(Element):
         image = self.load_surface(image_path, scale_size, smooth)
         super().__init__(image, pos, anchor)
 
-    @staticmethod
+    @classmethod
     def load_surface(
+            cls,
             image_path: str,
             scale_size: Optional[tuple[int, int]] = None,
             smooth: bool = True) -> pygame.Surface:
         """
         Loads a surface from disk (or builds a placeholder square if the
-        path doesn't exist), optionally scaling it. Split out from
-        __init__ so other classes (e.g. animated sprites that swap
-        frames at runtime) can reuse the exact same loading/placeholder
+        path doesn't exist), optionally scaling it, and caches the
+        result so a later call with the same arguments is a dict
+        lookup instead of another disk read. Split out from __init__
+        so other classes (e.g. animated sprites that swap frames at
+        runtime) can reuse the exact same loading/placeholder/caching
         behavior instead of duplicating it.
 
         Args:
@@ -213,21 +225,27 @@ class Image(Element):
         - scale_size: Optional target size to scale the image.
         - smooth: Whether to use anti-aliasing when scaling.
         """
+        cache_key = (image_path, scale_size, smooth)
+        cached = cls._surface_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         if not os.path.exists(image_path):
             size = scale_size if scale_size is not None else (50, 50)
             surface: pygame.Surface = pygame.Surface(size)
             surface.fill((255, 0, 128))  # placeholder if no image
-            return surface
-
-        if image_path.lower().endswith(".png"):
-            surface = pygame.image.load(image_path).convert_alpha()
         else:
-            surface = pygame.image.load(image_path).convert()
-
-        if scale_size is not None:
-            if smooth:
-                surface = pygame.transform.smoothscale(surface, scale_size)
+            if image_path.lower().endswith(".png"):
+                surface = pygame.image.load(image_path).convert_alpha()
             else:
-                surface = pygame.transform.scale(surface, scale_size)
+                surface = pygame.image.load(image_path).convert()
 
+            if scale_size is not None:
+                if smooth:
+                    surface = pygame.transform.smoothscale(surface,
+                                                           scale_size)
+                else:
+                    surface = pygame.transform.scale(surface, scale_size)
+
+        cls._surface_cache[cache_key] = surface
         return surface

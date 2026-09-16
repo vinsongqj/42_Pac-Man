@@ -3,7 +3,7 @@ from typing import Any, Optional
 import pygame
 
 
-class AppState(Enum):
+class SceneState(Enum):
     MENU = auto()
     PLAYING = auto()
     PAUSED = auto()
@@ -13,14 +13,15 @@ class AppState(Enum):
     QUIT = auto()
 
 
-class Screen:
+class Scene:
     def on_enter(self, **kwargs: Any) -> None:
         pass
 
-    def handle_event(self, event: "pygame.event.Event") -> Optional[AppState]:
+    def handle_event(self,
+                     event: "pygame.event.Event") -> Optional[SceneState]:
         return None
 
-    def update(self) -> Optional[AppState]:
+    def update(self) -> Optional[SceneState]:
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
@@ -30,24 +31,24 @@ class Screen:
         raise NotImplementedError
 
 
-class ScreenManager:
+class SceneManager:
     def __init__(self,
-                 screens: dict[AppState, Screen],
-                 start: AppState) -> None:
+                 screens: dict[SceneState, Scene],
+                 start: SceneState) -> None:
         self.screens = screens
         self.current_state = start
         self.current_screen = screens[start]
         self.current_screen.on_enter()
 
-    def switch_to(self, state: AppState, **kwargs: Any) -> None:
+    def switch_to(self, state: SceneState, **kwargs: Any) -> None:
         self.current_state = state
-        if state == AppState.QUIT:
+        if state == SceneState.QUIT:
             return
         self.current_screen = self.screens[state]
         self.current_screen.on_enter(**kwargs)
 
     def handle_event(self, event: "pygame.event.Event") -> None:
-        next: Optional[AppState] = self.current_screen.handle_event(event)
+        next: Optional[SceneState] = self.current_screen.handle_event(event)
         if next is not None:
             self.switch_to(next)
 

@@ -14,7 +14,7 @@ debug:
 clean:
 	@find . -type d -name __pycache__ -exec rm -rf {} +
 	@find . -type d -name .mypy_cache -exec rm -rf {} +
-	@rm -rf venv
+	@rm -rf venv .venv
 
 lint:
 	@flake8 . --exclude=./venv,venv,*/venv/*,.venv

@@ -3,24 +3,25 @@ import pygame
 import src.client.constants as c
 import src.client.display as display
 from src.client.game import GameState
-from src.client.screen_utils import AppState, Screen
+from src.client.graphics import Graphics
+from src.client.scene_utils import SceneState, Scene
 
 MOVE_KEYS = {
-    pygame.K_UP: (0, -1),
-    pygame.K_w: (0, -1),
-    pygame.K_DOWN: (0, 1),
-    pygame.K_s: (0, 1),
-    pygame.K_LEFT: (-1, 0),
-    pygame.K_a: (-1, 0),
-    pygame.K_RIGHT: (1, 0),
-    pygame.K_d: (1, 0),
+    pygame.K_UP: c.UP,
+    pygame.K_w: c.UP,
+    pygame.K_DOWN: c.DOWN,
+    pygame.K_s: c.DOWN,
+    pygame.K_LEFT: c.LEFT,
+    pygame.K_a: c.LEFT,
+    pygame.K_RIGHT: c.RIGHT,
+    pygame.K_d: c.RIGHT,
 }
 
 MENU_WIDTH = 900
 MENU_HEIGHT = 1000
 
 
-class MenuScreen(Screen):
+class MenuScene(Scene):
     def on_enter(self, **kwargs: Any) -> None:
         rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
         self.title_text = display.Text(
@@ -54,9 +55,10 @@ class MenuScreen(Screen):
     def screen_size(self) -> tuple[int, int]:
         return MENU_WIDTH, MENU_HEIGHT
 
-    def handle_event(self, event: "pygame.event.Event") -> Optional[AppState]:
+    def handle_event(self,
+                     event: "pygame.event.Event") -> Optional[SceneState]:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            return AppState.PLAYING
+            return SceneState.PLAYING
         return None
 
     def update(self) -> None:
@@ -71,30 +73,38 @@ class MenuScreen(Screen):
         self.score_text.draw(surface)
 
 
-class GameplayScreen(Screen):
+class GameScene(Scene):
     def on_enter(self, **kwargs: Any) -> None:
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
                      else GameState(size=(21, 21)))
 
-    def screen_size(self) -> tuple[int, int]:
-        return self.game.screen_size
+        existing_graphics: Optional[Graphics] = kwargs.get("graphics")
+        self.graphics = (existing_graphics if existing_graphics is not None
+                         else Graphics(self.game))
 
-    def handle_event(self, event: "pygame.event.Event") -> Optional[AppState]:
+    def screen_size(self) -> tuple[int, int]:
+        return self.graphics.screen_size
+
+    def handle_event(self,
+                     event: "pygame.event.Event") -> Optional[SceneState]:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                return AppState.QUIT
+                return SceneState.QUIT
             elif event.key == pygame.K_n:
                 self.game.next_level()
+                self.graphics.on_new_level()
             elif event.key == pygame.K_r:
                 self.game.restart_current_level()
+                self.graphics.on_new_level()
             elif event.key in MOVE_KEYS:
                 dx, dy = MOVE_KEYS[event.key]
-                self.game.move_player(dx, dy)
+                self.game.set_player_direction(dx, dy)
         return None
 
     def update(self) -> None:
-        self.game.update()
+        self.game.tick()
+        self.graphics.update()
         pygame.display.set_caption(
             f"Pac-Man Maze - Level {self.game.level_number} "
             f"- {self.game.remaining_pellets()} pellets left"
@@ -102,7 +112,4 @@ class GameplayScreen(Screen):
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
-        self.game.draw(surface)
-
-
-# Add new screens (PauseScreen, GameOverScreen, SettingsScreen, ...) below.
+        self.graphics.draw(surface)

@@ -69,10 +69,10 @@ class Maze:
                 self.pellets.add((x, y))
 
     def can_move(self, x: int, y: int, dx: int, dy: int) -> bool:
-        code = {(1, 0): c.EAST,
-                (-1, 0): c.WEST,
-                (0, 1): c.SOUTH,
-                (0, -1): c.NORTH
+        code = {c.RIGHT: c.EAST,
+                c.LEFT: c.WEST,
+                c.DOWN: c.SOUTH,
+                c.UP: c.NORTH
                 }[(dx, dy)]
         if not (0 <= x < self.width and 0 <= y < self.height):
             return False

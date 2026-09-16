@@ -1,7 +1,7 @@
 import sys
 import pygame
-from src.client.screen_utils import AppState, ScreenManager
-from src.client.screens import MenuScreen, GameplayScreen, MENU_WIDTH, MENU_HEIGHT
+from src.client.scene_utils import SceneState, SceneManager
+from src.client.scenes import MenuScene, GameScene, MENU_WIDTH, MENU_HEIGHT
 
 
 FPS = 30
@@ -13,10 +13,10 @@ def main() -> None:
     pygame.display.set_caption("42 Pac-Man")
 
     screens = {
-        AppState.MENU: MenuScreen(),
-        AppState.PLAYING: GameplayScreen(),
+        SceneState.MENU: MenuScene(),
+        SceneState.PLAYING: GameScene(),
     }
-    manager = ScreenManager(screens, start=AppState.MENU)
+    manager = SceneManager(screens, start=SceneState.MENU)
     screen = pygame.display.set_mode(manager.current_screen.screen_size())
     clock = pygame.time.Clock()
 
@@ -29,13 +29,13 @@ def main() -> None:
                 manager.handle_event(event)
 
         state = manager.current_state
-        if state == AppState.QUIT:
+        if state == SceneState.QUIT:
             running = False
             continue
 
         manager.update()
         state = manager.current_state
-        if state == AppState.QUIT:
+        if state == SceneState.QUIT:
             running = False
             continue
 

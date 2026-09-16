@@ -1,5 +1,3 @@
-import os
-
 CELL = 40
 MARGIN = 30
 
@@ -19,13 +17,14 @@ WALL_WIDTH = 4
 NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
 FIXED_FIRST_SEED = 42
 
-# --- Sprites ------------------------------------------------------------
-# Missing files fall back to Image's pink placeholder square automatically,
-# so these paths are safe to reference before the real art exists -- just
-# drop matching PNGs in place later and no code needs to change.
+UP = (0.0, -1.0)
+DOWN = (0.0, 1.0)
+LEFT = (-1.0, 0.0)
+RIGHT = (1.0, 0.0)
 
-# The player has one shared 3-frame mouth-open/close cycle. The base art
-# should be drawn facing RIGHT; Sprite rotates it to face UP/DOWN/LEFT.
+FPS = 30.0
+PLAYER_SPEED = 3.0
+
 PLAYER_SPRITE_FRAMES = [
     "assets/images/sprites/pacman/pacman_1.png",
     "assets/images/sprites/pacman/pacman_2.png",
@@ -43,7 +42,7 @@ GHOST_SPRITE_FRAMES = {
     for name in GHOST_NAMES
 }
 
-GHOST_FRAME_INTERVAL = 6  # game ticks per ghost animation frame
-PLAYER_FRAME_INTERVAL = 4  # game ticks per player mouth-cycle frame
+GHOST_FRAME_INTERVAL = 6
+PLAYER_FRAME_INTERVAL = 4
 
 MAIN_MENU_PACMAN_IMAGE = "assets/images/main_menu/pacman.png"

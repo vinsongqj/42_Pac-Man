@@ -11,10 +11,24 @@ DIRECTION_ANGLES = {
     "DOWN": 270,
 }
 
+DIRECTION_FROM_DELTA = {
+    c.UP: "UP",
+    c.DOWN: "DOWN",
+    c.LEFT: "LEFT",
+    c.RIGHT: "RIGHT",
+}
+
 FramesType = Union[list[str], dict[str, list[str]]]
 
 
 class Sprite(Image):
+    # Cache of pre-rotated surfaces for rotate_with_direction sprites
+    # (the player), keyed by (frame_path, angle). Rotating is cheaper
+    # than the disk load Image._surface_cache already avoids, but it's
+    # still needless work to redo on every direction change when the
+    # four possible rotations never change once computed.
+    _rotated_cache: dict[tuple[str, int], pygame.Surface] = {}
+
     def __init__(self,
                  frames: FramesType,
                  grid_pos: tuple[int, int],
@@ -70,11 +84,17 @@ class Sprite(Image):
         return frame_list[self.frame_index % len(frame_list)]
 
     def _refresh_image(self) -> None:
-        surface = Image.load_surface(self._current_path(), self._scale_size)
+        path = self._current_path()
+        surface = Image.load_surface(path, self._scale_size)
         if self.rotate_with_direction:
             angle = DIRECTION_ANGLES.get(self.direction, 0)
             if angle:
-                surface = pygame.transform.rotate(surface, angle)
+                cache_key = (path, angle)
+                rotated = Sprite._rotated_cache.get(cache_key)
+                if rotated is None:
+                    rotated = pygame.transform.rotate(surface, angle)
+                    Sprite._rotated_cache[cache_key] = rotated
+                surface = rotated
         self.layout.update_surface(surface)
 
     def set_direction(self, direction: str) -> None:
@@ -99,3 +119,77 @@ class Sprite(Image):
         frame_list = self._current_frame_list()
         self.frame_index = (self.frame_index + 1) % len(frame_list)
         self._refresh_image()
+
+
+class Player(Sprite):
+    """
+    Sprite for the player character. Knows its own sprite sheet,
+    animation timing, and how to sync itself to the game's player
+    state each frame.
+    """
+    def __init__(self,
+                 grid_pos: tuple[int, int],
+                 offset: tuple[int, int] = (0, 0)) -> None:
+        super().__init__(
+            frames=c.PLAYER_SPRITE_FRAMES,
+            grid_pos=grid_pos,
+            direction="RIGHT",
+            rotate_with_direction=True,
+            offset=offset,
+        )
+        self._anim_timer = 0
+
+    def sync(self,
+             grid_pos: tuple[int, int],
+             last_move: tuple[int, int]) -> None:
+        """
+        Updates the sprite's facing direction and position to match
+        the current game state.
+
+        Args:
+        - grid_pos: The player's current (x, y) grid position.
+        - last_move: The (dx, dy) delta of the player's last move,
+                     used to determine facing direction.
+        """
+        direction = DIRECTION_FROM_DELTA.get(last_move)
+        if direction is not None:
+            self.set_direction(direction)
+        x, y = grid_pos
+        self.set_grid_pos(x, y)
+
+    def update(self) -> None:
+        """
+        Advances the walking animation on its own timer.
+        """
+        self._anim_timer += 1
+        if self._anim_timer >= c.PLAYER_FRAME_INTERVAL:
+            self._anim_timer = 0
+            self.advance_frame()
+
+
+class Ghost(Sprite):
+    """
+    Sprite for a ghost character. Knows its own sprite sheet and
+    animation timing.
+    """
+    def __init__(self,
+                 name: str,
+                 grid_pos: tuple[int, int],
+                 offset: tuple[int, int] = (0, 0)) -> None:
+        super().__init__(
+            frames=c.GHOST_SPRITE_FRAMES[name],
+            grid_pos=grid_pos,
+            direction="DOWN",
+            offset=offset,
+        )
+        self.name = name
+        self._anim_timer = 0
+
+    def update(self) -> None:
+        """
+        Advances the walking animation on its own timer.
+        """
+        self._anim_timer += 1
+        if self._anim_timer >= c.GHOST_FRAME_INTERVAL:
+            self._anim_timer = 0
+            self.advance_frame()
