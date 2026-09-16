@@ -56,9 +56,4 @@ class GameState:
         return total - eaten
 
     def set_player_direction(self, dx: float, dy: float) -> None:
-        """
-        Queues the direction the player should move in. It takes
-        effect the next time the player reaches a cell where it isn't
-        blocked by a wall (see Player.update).
-        """
         self.player.set_input_direction((dx, dy))
