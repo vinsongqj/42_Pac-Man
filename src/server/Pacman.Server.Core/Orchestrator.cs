@@ -1,4 +1,8 @@
-﻿using Pacman.Server.Data;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using Pacman.Server.Data;
 
 namespace Pacman.Server.Core;
 
@@ -25,15 +29,33 @@ public class Orchestrator
         
         string encryptedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
         await _manager.CreateUserAsync(request.name, encryptedPassword);
+        await _manager.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> LoginAsync(LoginRequest request)
+    public async Task<AuthDTO?> LoginAsync(LoginRequest request)
     {
         //todo: add JWT
         User? user = await _manager.GetUserAsync(request.name);
-        if (user == null) return false;
-        if (BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.Password)) return false;
-        return true;
+        if (user == null) return null;
+        if (!BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.Password)) return null;
+
+        string key = "very_long_key";
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity([
+                new Claim(ClaimTypes.Name, user.Name),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            ]),
+            Expires = DateTime.UtcNow.AddDays(7),
+            Issuer = "PacmanDatabase",
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                SecurityAlgorithms.HmacSha256)
+        };
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        var tokenString = tokenHandler.WriteToken(token);
+        return new AuthDTO(tokenString);
     }
 }

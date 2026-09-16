@@ -49,6 +49,7 @@ app.MapPost("/signup", async (LoginRequest request, Orchestrator o) =>
         return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
     if (request.password.Length < 4)
         return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
+
     if (!await o.SignupAsync(request))
         return Results.Conflict("This name is already taken.");
     return Results.Ok("The user is successfully created.");
@@ -60,13 +61,16 @@ app.MapPost("/login", async (LoginRequest request, Orchestrator o) =>
         return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
     if (request.password.Length < 4)
         return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
-    if (!await o.LoginAsync(request)) return Results.Unauthorized();
-    return Results.Ok();
+
+    AuthDTO? auth = await o.LoginAsync(request);
+    if (auth == null) return Results.Unauthorized();
+    return Results.Ok(auth);
 });
 
 app.MapGet("/leaderboard", async (int size, Orchestrator o) =>
 {
     if (size < 1) return Results.BadRequest("The size should not be less than 1.");
+
     List<UserDTO> leaderboard = await o.GetLeaderboardAsync(size);
     return Results.Ok(leaderboard);
 });

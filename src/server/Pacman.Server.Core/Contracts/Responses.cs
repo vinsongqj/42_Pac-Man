@@ -13,3 +13,8 @@ public record UserDTO(string id, string name, int bestScore)
         return new UserDTO(user.Id.ToString(), user.Name, user.BestScore);
     }
 }
+
+public record AuthDTO(string token)
+{
+    string Token = token;
+}
