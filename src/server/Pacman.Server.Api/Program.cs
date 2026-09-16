@@ -1,4 +1,5 @@
-﻿using Microsoft.OpenApi;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.OpenApi;
 using Pacman.Server.Core;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,29 +29,42 @@ app.UseHttpsRedirection();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapGet("/user", (Guid id, Orchestrator o) =>
+app.MapGet("/user", async (Guid id, Orchestrator o) =>
 {
     
 });
 
-app.MapPut("/user", (Guid id, int newScore, Orchestrator o) =>
+app.MapPut("/user", async (Guid id, int newScore, Orchestrator o) =>
 {
 
 });
 
-app.MapPost("/signup", (string name, string password, Orchestrator o) =>
+app.MapPost("/signup", async (LoginRequest request, Orchestrator o) =>
 {
-
+    if (request.name.Length < 3)
+        return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
+    if (request.password.Length < 4)
+        return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
+    if (!await o.SignupAsync(request))
+        return Results.Conflict("This name is already taken.");
+    return Results.Ok("The user is successfully created.");
 });
 
-app.MapGet("/login", (string name, string password, Orchestrator o) =>
+app.MapGet("/login", async (LoginRequest request, Orchestrator o) =>
 {
-
+    if (request.name.Length < 3)
+        return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
+    if (request.password.Length < 4)
+        return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
+    if (!await o.LoginAsync(request)) return Results.Ok("Wrong password.");
+    return Results.Ok();
 });
 
-app.MapGet("/leaderboard", (int size, Orchestrator o) =>
+app.MapGet("/leaderboard", async (int size, Orchestrator o) =>
 {
-
+    if (size < 1) return Results.BadRequest("The size should not be less than 1.");
+    List<UserDTO> leaderboard = await o.GetLeaderboardAsync(size);
+    return Results.Ok(leaderboard);
 });
 
 app.Run();

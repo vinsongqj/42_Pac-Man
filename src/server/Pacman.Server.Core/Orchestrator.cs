@@ -11,13 +11,13 @@ public class Orchestrator
         _manager = manager;
     }
 
-    public async Task<List<UserDTO>> GetScoreboardAsync(int size)
+    public async Task<List<UserDTO>> GetLeaderboardAsync(int size)
     {
         List<User> users = await _manager.GetUsersByScoreAsync(size);
         return users.Select(u => UserDTO.FromUser(u)).ToList();
     }
 
-    public async Task<bool> Signup(LoginRequest request)
+    public async Task<bool> SignupAsync(LoginRequest request)
     {
         //todo: add encrypting
         if (request.name.Length < 3) return false;
@@ -27,7 +27,7 @@ public class Orchestrator
         return true;
     }
 
-    public async Task<bool> Login(LoginRequest request)
+    public async Task<bool> LoginAsync(LoginRequest request)
     {
         //todo: add JWT
         User? user = await _manager.GetUserAsync(request.name);
