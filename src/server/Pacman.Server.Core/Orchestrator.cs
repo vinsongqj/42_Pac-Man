@@ -19,6 +19,7 @@ public class Orchestrator
 
     public async Task<bool> Signup(LoginRequest request)
     {
+        //todo: add encrypting
         if (request.name.Length < 3) return false;
         if (request.password.Length < 4) return false;
         if (await _manager.UserExistsAsync(request.name)) return false;
@@ -28,9 +29,10 @@ public class Orchestrator
 
     public async Task<bool> Login(LoginRequest request)
     {
+        //todo: add JWT
         User? user = await _manager.GetUserAsync(request.name);
         if (user == null) return false;
-        if (user.Password != request.Password) return true;
+        if (user.Password != request.Password) return false;
         return true;
     }
 }
