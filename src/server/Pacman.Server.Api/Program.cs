@@ -1,8 +1,10 @@
 ﻿using Microsoft.OpenApi;
+using Pacman.Server.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddScoped<Orchestrator>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -36,7 +38,7 @@ app.MapPut("/user", (Guid id, int newScore) =>
 
 });
 
-app.MapPost("/signup", (string name, string password) =>
+app.MapPost("/signup", (string name, string password, Orchestrator o) =>
 {
 
 });
