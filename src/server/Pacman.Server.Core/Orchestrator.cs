@@ -1,4 +1,5 @@
 ﻿using Pacman.Server.Data;
+using BCrypt.Net;
 
 namespace Pacman.Server.Core;
 
@@ -19,11 +20,12 @@ public class Orchestrator
 
     public async Task<bool> SignupAsync(LoginRequest request)
     {
-        //todo: add encrypting
         if (request.name.Length < 3) return false;
         if (request.password.Length < 4) return false;
         if (await _manager.UserExistsAsync(request.name)) return false;
-        await _manager.CreateUserAsync(request.name, request.password);
+        
+        string encryptedPassword = BCrypt.Net.BCrypt.EnhancedHashPassword(request.Password);
+        await _manager.CreateUserAsync(request.name, encryptedPassword);
         return true;
     }
 
@@ -32,7 +34,7 @@ public class Orchestrator
         //todo: add JWT
         User? user = await _manager.GetUserAsync(request.name);
         if (user == null) return false;
-        if (user.Password != request.Password) return false;
+        if (BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.Password)) return false;
         return true;
     }
 }

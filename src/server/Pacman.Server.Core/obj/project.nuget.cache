@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "gh2p6Q3Mo00=",
+  "dgSpecHash": "dWq5tFw51SI=",
   "success": true,
   "projectFilePath": "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Core/Pacman.Server.Core.csproj",
   "expectedPackageFiles": [
+    "/home/alexhysel/.nuget/packages/bcrypt.net-next/4.2.0/bcrypt.net-next.4.2.0.nupkg.sha512",
     "/home/alexhysel/.nuget/packages/microsoft.entityframeworkcore/10.0.4/microsoft.entityframeworkcore.10.0.4.nupkg.sha512",
     "/home/alexhysel/.nuget/packages/microsoft.entityframeworkcore.abstractions/10.0.4/microsoft.entityframeworkcore.abstractions.10.0.4.nupkg.sha512",
     "/home/alexhysel/.nuget/packages/microsoft.entityframeworkcore.analyzers/10.0.4/microsoft.entityframeworkcore.analyzers.10.0.4.nupkg.sha512",

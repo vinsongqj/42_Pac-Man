@@ -56,7 +56,7 @@ app.MapGet("/login", async (LoginRequest request, Orchestrator o) =>
         return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
     if (request.password.Length < 4)
         return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
-    if (!await o.LoginAsync(request)) return Results.Ok("Wrong password.");
+    if (!await o.LoginAsync(request)) return Results.Unauthorized();
     return Results.Ok();
 });
 
