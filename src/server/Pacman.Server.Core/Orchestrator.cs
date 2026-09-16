@@ -40,7 +40,7 @@ public class Orchestrator
         if (user == null) return null;
         if (!BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.Password)) return null;
 
-        string key = "very_long_key";
+        string key = "very_damn_long_key_that_should_not_be_hardcoded_but_i_dont_care_yet";
         var tokenHandler = new JwtSecurityTokenHandler();
         var tokenDescriptor = new SecurityTokenDescriptor
         {
