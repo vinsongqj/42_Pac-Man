@@ -22,11 +22,7 @@ FramesType = Union[list[str], dict[str, list[str]]]
 
 
 class Sprite(Image):
-    # Cache of pre-rotated surfaces for rotate_with_direction sprites
-    # (the player), keyed by (frame_path, angle). Rotating is cheaper
-    # than the disk load Image._surface_cache already avoids, but it's
-    # still needless work to redo on every direction change when the
-    # four possible rotations never change once computed.
+
     _rotated_cache: dict[tuple[str, int], pygame.Surface] = {}
 
     def __init__(self,
@@ -122,11 +118,6 @@ class Sprite(Image):
 
 
 class Player(Sprite):
-    """
-    Sprite for the player character. Knows its own sprite sheet,
-    animation timing, and how to sync itself to the game's player
-    state each frame.
-    """
     def __init__(self,
                  grid_pos: tuple[int, int],
                  offset: tuple[int, int] = (0, 0)) -> None:
@@ -142,15 +133,6 @@ class Player(Sprite):
     def sync(self,
              grid_pos: tuple[int, int],
              last_move: tuple[int, int]) -> None:
-        """
-        Updates the sprite's facing direction and position to match
-        the current game state.
-
-        Args:
-        - grid_pos: The player's current (x, y) grid position.
-        - last_move: The (dx, dy) delta of the player's last move,
-                     used to determine facing direction.
-        """
         direction = DIRECTION_FROM_DELTA.get(last_move)
         if direction is not None:
             self.set_direction(direction)
@@ -158,9 +140,6 @@ class Player(Sprite):
         self.set_grid_pos(x, y)
 
     def update(self) -> None:
-        """
-        Advances the walking animation on its own timer.
-        """
         self._anim_timer += 1
         if self._anim_timer >= c.PLAYER_FRAME_INTERVAL:
             self._anim_timer = 0
@@ -168,10 +147,6 @@ class Player(Sprite):
 
 
 class Ghost(Sprite):
-    """
-    Sprite for a ghost character. Knows its own sprite sheet and
-    animation timing.
-    """
     def __init__(self,
                  name: str,
                  grid_pos: tuple[int, int],
@@ -186,9 +161,6 @@ class Ghost(Sprite):
         self._anim_timer = 0
 
     def update(self) -> None:
-        """
-        Advances the walking animation on its own timer.
-        """
         self._anim_timer += 1
         if self._anim_timer >= c.GHOST_FRAME_INTERVAL:
             self._anim_timer = 0
