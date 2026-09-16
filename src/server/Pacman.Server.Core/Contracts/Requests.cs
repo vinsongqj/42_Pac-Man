@@ -1,3 +1,5 @@
+namespace Pacman.Server.Core;
+
 public record LoginRequest(string name, string password)
 {
     public string Name = name;

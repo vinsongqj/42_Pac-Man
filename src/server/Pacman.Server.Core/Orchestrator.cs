@@ -1,5 +1,4 @@
 ﻿using Pacman.Server.Data;
-using BCrypt.Net;
 
 namespace Pacman.Server.Core;
 

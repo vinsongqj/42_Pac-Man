@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Pacman.Server.Core;
+using Pacman.Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddDbContext<PacmanDb>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Host=localhost;Database=pacman;Username=postgres;Password=postgres"));
+builder.Services.AddScoped<IDbManager, DbManager>();
 builder.Services.AddScoped<Orchestrator>();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -50,7 +54,7 @@ app.MapPost("/signup", async (LoginRequest request, Orchestrator o) =>
     return Results.Ok("The user is successfully created.");
 });
 
-app.MapGet("/login", async (LoginRequest request, Orchestrator o) =>
+app.MapPost("/login", async (LoginRequest request, Orchestrator o) =>
 {
     if (request.name.Length < 3)
         return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");

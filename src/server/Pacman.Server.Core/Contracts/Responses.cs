@@ -1,5 +1,7 @@
 using Pacman.Server.Data;
 
+namespace Pacman.Server.Core;
+
 public record UserDTO(string id, string name, int bestScore)
 {
     string Id = id;
