@@ -1,5 +1,6 @@
 from typing import Optional
 import src.client.constants as c
+import math
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
@@ -27,6 +28,11 @@ class Entity:
         self.pos = (self.pos[0] + step_x, self.pos[1] + step_y)
         self.last_move = self.direction
 
+    def _is_aligned(self) -> bool:
+        x, y = self.pos
+        return (abs(x - round(x)) < THRESHOLD and
+                abs(y - round(y)) < THRESHOLD)
+
 
 class Player(Entity):
     def __init__(self,
@@ -45,11 +51,6 @@ class Player(Entity):
 
     def set_input_direction(self, direction: tuple[float, float]) -> None:
         self.pending_direction = direction
-
-    def _is_aligned(self) -> bool:
-        x, y = self.pos
-        return (abs(x - round(x)) < THRESHOLD and
-                abs(y - round(y)) < THRESHOLD)
 
     def update(self, level) -> Optional[tuple[int, int]]:
         new_cell: Optional[tuple[int, int]] = None
@@ -85,3 +86,25 @@ class Ghost(Entity):
     def __init__(self, name: str, pos: tuple[float, float]) -> None:
         super().__init__(pos)
         self.name = name
+
+    def _get_target(self) -> tuple[int, int]:
+        pass
+
+    def _distance_to(self, absX: float, absY: float) -> float:
+        relX, relY = (absX - self.pos[0], absY - self.pos[1])
+        relX = abs(relX)
+        relY = abs(relY)
+        distance = math.sqrt(relX**2 + relY**2)
+        print(self.name, distance)
+        return distance
+
+    def update(self, game):
+        self._distance_to(*game.player.get_pos())
+
+
+class Blinky(Ghost):
+    def __init__(self, pos: tuple[float, float]) -> None:
+        super().__init__('red', pos)
+
+    def _get_target(self) -> tuple[int, int]:
+        pass
