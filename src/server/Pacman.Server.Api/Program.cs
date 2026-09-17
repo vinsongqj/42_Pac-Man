@@ -1,8 +1,15 @@
-﻿using Microsoft.OpenApi;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
+using Pacman.Server.Core;
+using Pacman.Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
+builder.Services.AddDbContext<PacmanDb>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Host=localhost;Database=pacman;Username=postgres;Password=postgres"));
+builder.Services.AddScoped<IDbManager, DbManager>();
+builder.Services.AddScoped<Orchestrator>();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -26,29 +33,46 @@ app.UseHttpsRedirection();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapGet("/user", (Guid id) =>
+app.MapGet("/user", async (Guid id, Orchestrator o) =>
 {
     
 });
 
-app.MapPut("/user", (Guid id, int newScore) =>
+app.MapPut("/user", async (Guid id, int newScore, Orchestrator o) =>
 {
 
 });
 
-app.MapPost("/signup", (string name, string password) =>
+app.MapPost("/signup", async (LoginRequest request, Orchestrator o) =>
 {
+    if (request.name.Length < 3)
+        return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
+    if (request.password.Length < 4)
+        return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
 
+    if (!await o.SignupAsync(request))
+        return Results.Conflict("This name is already taken.");
+    return Results.Ok("The user is successfully created.");
 });
 
-app.MapGet("/login", (string name, string password) =>
+app.MapPost("/login", async (LoginRequest request, Orchestrator o) =>
 {
+    if (request.name.Length < 3)
+        return Results.UnprocessableEntity("The name is too short, should be at least 3 chars.");
+    if (request.password.Length < 4)
+        return Results.UnprocessableEntity("The password is too short, should be at least 4 chars.");
 
+    AuthDTO? auth = await o.LoginAsync(request);
+    if (auth == null) return Results.Unauthorized();
+    return Results.Ok(auth);
 });
 
-app.MapGet("/leaderboard", (int size) =>
+app.MapGet("/leaderboard", async (int size, Orchestrator o) =>
 {
+    if (size < 1) return Results.BadRequest("The size should not be less than 1.");
 
+    List<UserDTO> leaderboard = await o.GetLeaderboardAsync(size);
+    return Results.Ok(leaderboard);
 });
 
 app.Run();

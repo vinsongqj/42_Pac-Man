@@ -18,6 +18,11 @@ public class DbManager : IDbManager
         return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
     }
 
+    public async Task<User?> GetUserAsync(string name)
+    {
+        return await _context.Users.FirstOrDefaultAsync(u => u.Name == name);
+    }
+
     public async Task<List<User>> GetUsersByScoreAsync(int amount)
     {
         return await _context.Users.OrderBy(u => u.BestScore).Take(amount).ToListAsync();
@@ -27,5 +32,10 @@ public class DbManager : IDbManager
     {
         User user = new(name, password);
         await _context.Users.AddAsync(user);
+    }
+
+    public async Task<bool> UserExistsAsync(string name)
+    {
+        return await _context.Users.AnyAsync(u => u.Name == name);
     }
 }
