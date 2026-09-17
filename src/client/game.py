@@ -1,6 +1,6 @@
 from src.client.maze import Maze
 from src.client.gamemode import GameMode
-from src.client.entities import Player, Ghost, Blinky
+from src.client.entities import Player, Ghost, Blinky, Clyde
 import src.client.constants as c
 
 
@@ -39,8 +39,8 @@ class GameState:
         self.ghosts = [
             Blinky([0, 0], 3),
             Blinky([self.level.width - 1, 0], 3),
-            Blinky([self.level.width - 1, self.level.height - 1], 3),
-            Blinky([0, self.level.height - 1], 3)
+            Clyde([self.level.width - 1, self.level.height - 1], 3),
+            Clyde([0, self.level.height - 1], 3)
         ]
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()

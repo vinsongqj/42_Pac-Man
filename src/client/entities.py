@@ -85,6 +85,7 @@ class Player(Entity):
 class Ghost(Entity):
     def __init__(self, name: str, pos: tuple[float, float], speed: float) -> None:
         super().__init__(pos, speed)
+        self.home = pos
         self.name = name
         self.is_eaten = False
 
@@ -125,3 +126,12 @@ class Blinky(Ghost):
 
     def _get_target_pos(self, game) -> tuple[int, int]:
         return game.player.get_pos()
+
+class Clyde(Ghost):
+    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+        super().__init__('yellow', pos, speed)
+
+    def _get_target_pos(self, game):
+        distance_to_pacman = math.dist(self.get_pos(), game.player.get_pos())
+        if (distance_to_pacman > 8): return game.player.get_pos()
+        else: return self.home
