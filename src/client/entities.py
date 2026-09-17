@@ -83,28 +83,47 @@ class Player(Entity):
 
 
 class Ghost(Entity):
-    def __init__(self, name: str, pos: tuple[float, float]) -> None:
-        super().__init__(pos)
+    def __init__(self, name: str, pos: tuple[float, float], speed: float) -> None:
+        super().__init__(pos, speed)
         self.name = name
+        self.is_eaten = False
 
-    def _get_target(self) -> tuple[int, int]:
+    def _get_target_pos(self, game) -> tuple[int, int]:
         pass
 
-    def _distance_to(self, absX: float, absY: float) -> float:
-        relX, relY = (absX - self.pos[0], absY - self.pos[1])
-        relX = abs(relX)
-        relY = abs(relY)
-        distance = math.sqrt(relX**2 + relY**2)
-        print(self.name, distance)
-        return distance
+    def _get_directions(self) -> list[tuple[int, int]]:
+        d = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        if self.direction == (0, 0): return d
+        if not self.is_eaten: d.remove((-self.direction[0], -self.direction[1]))
+        return d
 
     def update(self, game):
-        self._distance_to(*game.player.get_pos())
+        if self._is_aligned():
+            best_distance = 99999999
+            target_pos = self._get_target_pos(game)
+            best_direction = self.direction
+
+            for d in self._get_directions():
+                if not (game.level.can_move(*self.get_cell(), *d)):
+                    continue
+
+                next_pos = (d[0] + self.get_pos()[0], d[1] + self.get_pos()[1])
+                distance_to_target = math.dist(next_pos, target_pos)
+                if (distance_to_target < best_distance):
+                    best_distance = distance_to_target
+                    best_direction = d
+
+            self.direction = best_direction
+
+        print(self.pos)
+
+        if self.direction != (0, 0):
+            self.move()
 
 
 class Blinky(Ghost):
-    def __init__(self, pos: tuple[float, float]) -> None:
-        super().__init__('red', pos)
+    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+        super().__init__('red', pos, speed)
 
-    def _get_target(self) -> tuple[int, int]:
-        pass
+    def _get_target_pos(self, game) -> tuple[int, int]:
+        return game.player.get_pos()

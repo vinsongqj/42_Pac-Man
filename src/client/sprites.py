@@ -117,7 +117,7 @@ class Sprite(Image):
         self._refresh_image()
 
 
-class Player(Sprite):
+class PlayerSprite(Sprite):
     def __init__(self,
                  grid_pos: tuple[int, int],
                  offset: tuple[int, int] = (0, 0)) -> None:
@@ -146,7 +146,7 @@ class Player(Sprite):
             self.advance_frame()
 
 
-class Ghost(Sprite):
+class GhostSprite(Sprite):
     def __init__(self,
                  name: str,
                  grid_pos: tuple[int, int],
@@ -159,6 +159,11 @@ class Ghost(Sprite):
         )
         self.name = name
         self._anim_timer = 0
+
+    def sync(self,
+             grid_pos: tuple[int, int]):
+        x, y = grid_pos
+        self.set_grid_pos(x, y)
 
     def update(self) -> None:
         self._anim_timer += 1
