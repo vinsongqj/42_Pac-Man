@@ -21,13 +21,11 @@ class Entity:
     def get_cell(self) -> tuple[int, int]:
         return (round(self.pos[0]), round(self.pos[1]))
 
-    def move(self, level, dx: float, dy: float) -> bool:
-        x, y = self.get_cell()
-        if not level.can_move(x, y, dx, dy):
-            return False
-        self.pos = (x + dx, y + dy)
-        self.last_move = (dx, dy)
-        return True
+    def move(self) -> bool:
+        step_x = self.direction[0] * self.speed / c.FPS
+        step_y = self.direction[1] * self.speed / c.FPS
+        self.pos = (self.pos[0] + step_x, self.pos[1] + step_y)
+        self.last_move = self.direction
 
 
 class Player(Entity):
@@ -42,7 +40,6 @@ class Player(Entity):
     def decrease_remaining_lives(self):
         self._remaining_lives -= 1
 
-    @property
     def get_remaining_lives(self):
         return self._remaining_lives
 
@@ -79,10 +76,7 @@ class Player(Entity):
                 self.direction = (0.0, 0.0)
 
         if self.direction != (0.0, 0.0):
-            step_x = self.direction[0] * self.speed / c.FPS
-            step_y = self.direction[1] * self.speed / c.FPS
-            self.pos = (self.pos[0] + step_x, self.pos[1] + step_y)
-            self.last_move = self.direction
+            self.move()
 
         return new_cell
 
