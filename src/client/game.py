@@ -46,6 +46,8 @@ class GameState:
         if (self.paused): return
         if self.remaining_pellets() == 0:
             self.next_level()
+        for ghost in self.ghosts:
+            ghost.update(self)
         new_cell = self.player.update(self.level)
         if new_cell is None:
             return

@@ -107,8 +107,6 @@ class GameScene(Scene):
     def update(self) -> None:
         self.game.tick()
         self.graphics.update()
-        for ghost in self.game.ghosts:
-            ghost.update(self.game)
         pygame.display.set_caption(
             f"Pac-Man Maze - Level {self.game.level_number} "
             f"- {self.game.remaining_pellets()} pellets left"
