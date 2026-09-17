@@ -97,11 +97,12 @@ class GameScene(Scene):
             elif event.key == pygame.K_r:
                 self.game.restart_current_level()
                 self.graphics.on_new_level()
-            elif event.key == pygame.K_e:
+            elif event.key == pygame.K_SPACE:
                 self.game.paused = not self.game.paused
             elif event.key in MOVE_KEYS:
                 dx, dy = MOVE_KEYS[event.key]
                 self.game.set_player_direction(dx, dy)
+                self.game.paused = False
         return None
 
     def update(self) -> None:

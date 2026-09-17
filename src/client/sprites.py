@@ -161,7 +161,11 @@ class GhostSprite(Sprite):
         self._anim_timer = 0
 
     def sync(self,
-             grid_pos: tuple[int, int]):
+             grid_pos: tuple[int, int],
+             last_move: tuple[int, int]) -> None:
+        direction = DIRECTION_FROM_DELTA.get(last_move)
+        if direction is not None:
+            self.set_direction(direction)
         x, y = grid_pos
         self.set_grid_pos(x, y)
 
