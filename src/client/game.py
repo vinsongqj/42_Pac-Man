@@ -6,6 +6,7 @@ import src.client.constants as c
 
 class GameState:
     def __init__(self, size: tuple[int, int] = (21, 21)) -> None:
+        self.paused: bool = False
         self.size = size
         self.level_number = 0
         self.level: Maze
@@ -42,6 +43,9 @@ class GameState:
         self.eaten_power_pellets = set()
 
     def tick(self) -> None:
+        if (self.paused): return
+        if self.remaining_pellets() == 0:
+            self.next_level()
         new_cell = self.player.update(self.level)
         if new_cell is None:
             return
