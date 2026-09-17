@@ -37,6 +37,14 @@ class Player(Entity):
         super().__init__(pos, speed)
         self.pending_direction: tuple[float, float] = (0.0, 0.0)
         self._last_cell: tuple[int, int] = self.get_cell()
+        self._remaining_lives = 3
+
+    def decrease_remaining_lives(self):
+        self._remaining_lives -= 1
+
+    @property
+    def get_remaining_lives(self):
+        return self._remaining_lives
 
     def set_input_direction(self, direction: tuple[float, float]) -> None:
         self.pending_direction = direction
