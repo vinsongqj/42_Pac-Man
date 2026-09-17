@@ -160,7 +160,6 @@ class Inky(Ghost):
         return (x, y)
 
 
-
 class Clyde(Ghost):
     def __init__(self, pos: tuple[float, float], speed: float) -> None:
         super().__init__('yellow', pos, speed)
