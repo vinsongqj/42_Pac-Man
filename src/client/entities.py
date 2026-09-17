@@ -101,7 +101,7 @@ class Ghost(Entity):
         if self._is_aligned():
             best_distance = 99999999
             target_pos = self._get_target_pos(game)
-            best_direction = self.direction
+            best_direction = (0, 0)
 
             for d in self._get_directions():
                 if not (game.level.can_move(*self.get_cell(), *d)):
@@ -114,8 +114,6 @@ class Ghost(Entity):
                     best_direction = d
 
             self.direction = best_direction
-
-        print(self.pos)
 
         if self.direction != (0, 0):
             self.move()
