@@ -35,7 +35,6 @@ public class Orchestrator
 
     public async Task<AuthDTO?> LoginAsync(LoginRequest request)
     {
-        //todo: add JWT
         User? user = await _manager.GetUserAsync(request.name);
         if (user == null) return null;
         if (!BCrypt.Net.BCrypt.EnhancedVerify(request.Password, user.Password)) return null;
