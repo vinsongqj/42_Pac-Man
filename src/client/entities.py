@@ -143,10 +143,22 @@ class Pinky(Ghost):
 
 class Inky(Ghost):
     def __init__(self, pos: tuple[float, float], speed: float) -> None:
-        super().__init__('yellow', pos, speed)
+        super().__init__('cyan', pos, speed)
     
     def _get_target_pos(self, game):
-        return self.home
+        blinky_x, blinky_y = game.ghosts[0].get_pos()
+        x, y = game.player.get_pos()
+        dx, dy = game.player.direction
+        x += dx * 2
+        y += dy * 2
+        x -= blinky_x
+        y -= blinky_y
+        x *= 2
+        y *= 2
+        x += blinky_x
+        y += blinky_y
+        return (x, y)
+
 
 
 class Clyde(Ghost):
