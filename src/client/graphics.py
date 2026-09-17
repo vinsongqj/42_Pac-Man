@@ -41,9 +41,8 @@ class Graphics:
     def update(self) -> None:
         self.player_sprite.sync(self.game.player_pos, self.game.last_move)
         self.player_sprite.update()
-        for ghost_sprite in self.ghost_sprites:
-            #todo: its hardcoded to the first ghost, should be changed
-            ghost_sprite.sync(self.game.ghosts[0].pos)
+        for i, ghost_sprite in enumerate(self.ghost_sprites):
+            ghost_sprite.sync(self.game.ghosts[i].pos)
             ghost_sprite.update()
 
     def draw(self, screen: "pygame.Surface") -> None:
