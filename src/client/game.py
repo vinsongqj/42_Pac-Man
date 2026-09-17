@@ -28,6 +28,7 @@ class GameState:
     def next_level(self) -> None:
         self.level_number += 1
         self._reset_level()
+        self.paused = True
 
     def restart_current_level(self) -> None:
         self._reset_level()
