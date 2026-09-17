@@ -127,6 +127,28 @@ class Blinky(Ghost):
     def _get_target_pos(self, game) -> tuple[int, int]:
         return game.player.get_pos()
 
+
+class Pinky(Ghost):
+    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+        super().__init__('pink', pos, speed)
+
+    def _get_target_pos(self, game):
+        x, y = game.player.get_pos()
+        dx, dy = game.player.direction
+        x = x + dx * 4
+        y = y + dy * 4
+        if dy == -1: x -= 4
+        return (x, y)
+
+
+class Inky(Ghost):
+    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+        super().__init__('yellow', pos, speed)
+    
+    def _get_target_pos(self, game):
+        return self.home
+
+
 class Clyde(Ghost):
     def __init__(self, pos: tuple[float, float], speed: float) -> None:
         super().__init__('yellow', pos, speed)
