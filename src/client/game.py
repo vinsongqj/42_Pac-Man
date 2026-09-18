@@ -2,11 +2,13 @@ from src.client.maze import Maze
 from src.client.gamemode import GameMode
 from src.client.entities import Player, Ghost, Blinky, Pinky, Inky, Clyde
 import src.client.constants as c
+import math
 
 
 class GameState:
     def __init__(self, size: tuple[int, int] = (21, 21)) -> None:
         self.paused: bool = False
+        self._gameover = False
         self.size = size
         self.level_number = 0
         self.level: Maze
@@ -16,6 +18,9 @@ class GameState:
         self.eaten_pellets: set[tuple[int, int]]
         self.eaten_power_pellets: set[tuple[int, int]]
         self.next_level()
+
+    def get_gameover(self):
+        return self._gameover
 
     @property
     def player_pos(self) -> tuple[float, float]:
@@ -47,18 +52,21 @@ class GameState:
         self.eaten_power_pellets = set()
 
     def tick(self) -> None:
-        if (self.paused): return
+        if (self.paused or self._gameover): return
 
         if self.remaining_pellets() == 0:
             self.next_level()
         for ghost in self.ghosts:
             ghost.update(self)
         new_cell = self.player.update(self.level)
-        if any(g.get_cell() == self.player.get_cell() for g in self.ghosts):
+        if any(math.dist(g.get_pos(), self.player.get_pos()) < 0.25 for g in self.ghosts):
             self.player.decrease_remaining_lives()
             if self.player.get_remaining_lives() <= 0:
+                self._gameover = True
+            else:
                 print(self.player.get_remaining_lives())
                 self.player.teleport_home()
+                
         if new_cell is None:
             return
         if new_cell in self.level.pellets:
