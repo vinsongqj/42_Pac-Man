@@ -36,11 +36,12 @@ class GameState:
     def _reset_level(self) -> None:
         self.level = Maze(self.level_number, self.size)
         self.player = Player(self.level.player_start)
+        ghost_speed = c.GHOST_SPEED + 0.5 * self.level_number
         self.ghosts = [
-            Blinky([0, 0], c.GHOST_SPEED),
-            Pinky([self.level.width - 1, 0], c.GHOST_SPEED),
-            Inky([self.level.width - 1, self.level.height - 1], c.GHOST_SPEED),
-            Clyde([0, self.level.height - 1], c.GHOST_SPEED)
+            Blinky([0, 0], ghost_speed),
+            Pinky([self.level.width - 1, 0], ghost_speed),
+            Inky([self.level.width - 1], ghost_speed),
+            Clyde([0, self.level.height - 1], ghost_speed)
         ]
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()
