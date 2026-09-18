@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import src.client.constants as c
 import math
+import random
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
@@ -111,10 +112,11 @@ class Ghost(Entity, ABC):
     def _get_target_pos(self, game) -> tuple[int, int]:
         ...
 
-    def _get_directions(self) -> list[tuple[int, int]]:
+    def _get_directions(self, level) -> list[tuple[int, int]]:
         d = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         if self.direction == (0, 0): return d
         if not self.is_eaten: d.remove((-self.direction[0], -self.direction[1]))
+        d = [d1 for d1 in d if (level.can_move(*self.cell, *d1))]
         return d
 
     def tick(self, game):
@@ -132,16 +134,17 @@ class Ghost(Entity, ABC):
 
             best_distance = 99999999
             best_direction = (0, 0)
+            directions = self._get_directions(game.level)
 
-            for d in self._get_directions():
-                if not (game.level.can_move(*self.cell, *d)):
-                    continue
-
-                next_pos = (d[0] + self.pos[0], d[1] + self.pos[1])
-                distance_to_target = math.dist(next_pos, tarpos)
-                if (distance_to_target < best_distance):
-                    best_distance = distance_to_target
-                    best_direction = d
+            if game.frightened:
+                best_direction = random.choice(directions)
+            else:
+                for d in directions:
+                    next_pos = (d[0] + self.pos[0], d[1] + self.pos[1])
+                    distance_to_target = math.dist(next_pos, tarpos)
+                    if (distance_to_target < best_distance):
+                        best_distance = distance_to_target
+                        best_direction = d
 
             self.direction = best_direction
 
