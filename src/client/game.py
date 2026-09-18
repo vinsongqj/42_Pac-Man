@@ -49,6 +49,7 @@ class GameState:
         self._reset_level()
 
     def _reset_level(self) -> None:
+        self._ticks = 0
         self.level = Maze(self.level_number, self.size)
         self.player = Player(self.level.player_start)
         ghost_speed = c.GHOST_SPEED
@@ -65,6 +66,7 @@ class GameState:
         if (self.paused or self._gameover): return
 
         self._ticks += 1
+        if (self.ticks % (90 * c.FPS)): self._gameover = True
 
         #add super pacgum eaten and FRIGHTENED gamemode
 
