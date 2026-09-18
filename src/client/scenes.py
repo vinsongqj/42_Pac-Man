@@ -35,17 +35,92 @@ class MenuScene(Scene):
             text="PRESS SPACE TO START",
             font_size=28,
             color=(255, 255, 255),
-            pos=(rect.centerx, 800),
+            pos=(rect.centerx, 850),
             anchor="center",
             fade_speed=0.003,
         )
-        self.score_text = display.Text(
-            text="SCORE: 0",
-            font_size=24,
-            color="Black",
-            pos=(20, 20),
-            anchor="topleft",
+        self.score_title_text = display.Text(
+            text="HIGH SCORES",
+            font_size=28,
+            color="White",
+            pos=(rect.centerx, 300),
+            anchor="center",
         )
+
+        score_data = [
+            {"name": "Alex",
+             "bestScore": 1000},
+            {"name": "Bob",
+             "bestScore": 1000},
+            {"name": "Chrissy",
+             "bestScore": 1000},
+            {"name": "Danielfefefefefefefef",
+             "bestScore": 1000},
+            {"name": "Prag",
+             "bestScore": 1000},
+            {"name": "Selene",
+             "bestScore": 1000},
+            {"name": "Goat",
+             "bestScore": 1000},
+            {"name": "Daddy",
+             "bestScore": 1000},
+            {"name": "Unc",
+             "bestScore": 1000},
+            {"name": "Balls",
+             "bestScore": 1000},
+        ]
+
+        start_y = 350
+        line_height = 38
+        max_name_length = 7
+
+        rank_x = rect.centerx - 110   # Column 1: Rank (Right aligned)
+        name_x = rect.centerx - 60   # Column 2: Player Name (Left aligned)
+        score_x = rect.centerx + 120  # Column 3: High Score (Right aligned)
+
+        self.scores_text: list[tuple[display.Text, display.Text,
+                                     display.Text]] = []
+
+        for idx, entry in enumerate(score_data[:10]):
+            row_y = start_y + (idx * line_height)
+
+            raw_name = entry["name"] if entry["name"] else "-"
+            if len(raw_name) > max_name_length:
+                formatted_name = f"{raw_name[:max_name_length]}..."
+            else:
+                formatted_name = raw_name
+
+            # Column 1: Rank Number
+            rank_text = display.Text(
+                text=f"{idx + 1}",
+                font_size=26,
+                color="White",
+                pos=(rank_x, row_y - 2),
+                anchor="topright",
+            )
+
+            # Column 2: Player Name
+            name_text = display.Text(
+                text=formatted_name,
+                font_size=35,
+                font_name="Geist-Light.ttf",
+                color="White",
+                pos=(name_x, row_y),
+                anchor="topleft",
+            )
+
+            # Column 3: Best Score
+            score_text = display.Text(
+                text=str(entry["bestScore"]),
+                font_size=35,
+                font_name="Geist-Light.ttf",
+                color="White",
+                pos=(score_x, row_y),
+                anchor="topright",
+            )
+
+            self.scores_text.append((rank_text, name_text, score_text))
+
         self.pacman = display.Image(
             image_path=c.MAIN_MENU_PACMAN_IMAGE,
             pos=(rect.centerx, 500),
@@ -70,7 +145,12 @@ class MenuScene(Scene):
         self.pacman.draw(surface)
         self.title_text.draw(surface)
         self.subtitle_text.draw(surface)
-        self.score_text.draw(surface)
+        self.score_title_text.draw(surface)
+
+        for rank_text, name_text, score_text in self.scores_text:
+            rank_text.draw(surface)
+            name_text.draw(surface)
+            score_text.draw(surface)
 
 
 class GameScene(Scene):
