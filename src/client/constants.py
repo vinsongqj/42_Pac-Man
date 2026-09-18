@@ -24,7 +24,7 @@ RIGHT = (1.0, 0.0)
 
 FPS = 30.0
 PLAYER_SPEED = 3.0
-GHOST_SPEED = 2.3
+GHOST_SPEED = 2.5
 
 PLAYER_SPRITE_FRAMES = [
     "assets/images/sprites/pacman/pacman_1.png",

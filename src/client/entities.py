@@ -11,7 +11,8 @@ class Entity:
     def __init__(self,
                  pos: tuple[float, float],
                  speed: float = 0.0) -> None:
-        self.pos: tuple[float, float] = (float(pos[0]), float(pos[1]))
+        self.pos: tuple[float, float] = pos
+        self.home: tuple[float, float] = pos
         self.speed: float = speed  # cells per second
         self.direction: tuple[float, float] = (0.0, 0.0)
         self.last_move: tuple[float, float] = (0.0, 0.0)
@@ -45,6 +46,10 @@ class Player(Entity):
 
     def decrease_remaining_lives(self):
         self._remaining_lives -= 1
+
+    def teleport_home(self):
+        self.pos = self.home
+        self.direction = (0, 0)
 
     def get_remaining_lives(self):
         return self._remaining_lives
@@ -85,7 +90,6 @@ class Player(Entity):
 class Ghost(Entity):
     def __init__(self, name: str, pos: tuple[float, float], speed: float) -> None:
         super().__init__(pos, speed)
-        self.home = pos
         self.name = name
         self.is_eaten = False
 

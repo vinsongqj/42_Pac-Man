@@ -36,11 +36,11 @@ class GameState:
     def _reset_level(self) -> None:
         self.level = Maze(self.level_number, self.size)
         self.player = Player(self.level.player_start)
-        ghost_speed = c.GHOST_SPEED + 0.5 * self.level_number
+        ghost_speed = c.GHOST_SPEED
         self.ghosts = [
             Blinky([0, 0], ghost_speed),
             Pinky([self.level.width - 1, 0], ghost_speed),
-            Inky([self.level.width - 1], ghost_speed),
+            Inky([self.level.width - 1, self.level.height - 1], ghost_speed),
             Clyde([0, self.level.height - 1], ghost_speed)
         ]
         self.eaten_pellets = set()
@@ -48,11 +48,17 @@ class GameState:
 
     def tick(self) -> None:
         if (self.paused): return
+
         if self.remaining_pellets() == 0:
             self.next_level()
         for ghost in self.ghosts:
             ghost.update(self)
         new_cell = self.player.update(self.level)
+        if any(g.get_cell() == self.player.get_cell() for g in self.ghosts):
+            self.player.decrease_remaining_lives()
+            if self.player.get_remaining_lives() <= 0:
+                print(self.player.get_remaining_lives())
+                self.player.teleport_home()
         if new_cell is None:
             return
         if new_cell in self.level.pellets:
