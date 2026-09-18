@@ -8,19 +8,29 @@ import math
 class GameState:
     def __init__(self, size: tuple[int, int] = (21, 21)) -> None:
         self.paused: bool = False
+        self._ticks: int = 0
         self._gameover = False
         self.size = size
         self.level_number = 0
         self.level: Maze
-        self.gamemode: GameMode
+        self._gamemode: GameMode = GameMode.CHASE
         self.player: Player
         self.ghosts: list[Ghost]
         self.eaten_pellets: set[tuple[int, int]]
         self.eaten_power_pellets: set[tuple[int, int]]
         self.next_level()
 
-    def get_gameover(self):
+    @property
+    def ticks(self) -> int:
+        return self._ticks
+
+    @property
+    def gameover(self) -> bool:
         return self._gameover
+
+    @property
+    def gamemode(self) -> GameMode:
+        return self._gamemode
 
     @property
     def player_pos(self) -> tuple[float, float]:
@@ -54,25 +64,34 @@ class GameState:
     def tick(self) -> None:
         if (self.paused or self._gameover): return
 
+        self._ticks += 1
+
+        #add super pacgum eaten and FRIGHTENED gamemode
+
         if self.remaining_pellets() == 0:
             self.next_level()
-        for ghost in self.ghosts:
-            ghost.update(self)
-        new_cell = self.player.update(self.level)
-        if any(math.dist(g.get_pos(), self.player.get_pos()) < 0.25 for g in self.ghosts):
+        
+        new_cell = self.player.tick(self.level)
+        if any(math.dist(g.pos, self.player.pos) < 0.25 for g in self.ghosts):
             self.player.decrease_remaining_lives()
-            if self.player.get_remaining_lives() <= 0:
+            if self.player.remaining_lives <= 0:
                 self._gameover = True
             else:
-                print(self.player.get_remaining_lives())
                 self.player.teleport_home()
                 
+        self._tick_entities()
         if new_cell is None:
             return
         if new_cell in self.level.pellets:
             self.eaten_pellets.add(new_cell)
         if new_cell in self.level.power_pellets:
             self.eaten_power_pellets.add(new_cell)
+        
+
+    def _tick_entities(self) -> None:
+
+        for ghost in self.ghosts:
+            ghost.tick(self)
 
     def remaining_pellets(self) -> int:
         total = len(self.level.pellets) + len(self.level.power_pellets)
