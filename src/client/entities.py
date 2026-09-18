@@ -2,7 +2,6 @@ from typing import Optional
 from abc import ABC, abstractmethod
 
 import src.client.constants as c
-from .gamemode import GameMode
 import math
 
 # How close a coordinate has to be to a whole number to count as
@@ -124,6 +123,9 @@ class Ghost(Entity, ABC):
             if self.is_eaten:
                 tarpos = self.home
                 self._speed = 5
+            elif game.frightened:
+                tarpos = self.home
+                self._speed = 2.5
             else:
                 tarpos = self._get_target_pos(game)
                 self._speed = 2.5

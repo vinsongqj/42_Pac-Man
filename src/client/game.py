@@ -1,5 +1,4 @@
 from src.client.maze import Maze
-from src.client.gamemode import GameMode
 from src.client.entities import Player, Ghost, Blinky, Pinky, Inky, Clyde
 import src.client.constants as c
 import math
@@ -9,16 +8,21 @@ class GameState:
     def __init__(self, size: tuple[int, int] = (21, 21)) -> None:
         self.paused: bool = False
         self._ticks: int = 0
+        self._frightened_timer = 0
+        self._frightened = False
         self._gameover = False
         self.size = size
         self.level_number = 0
         self.level: Maze
-        self._gamemode: GameMode = GameMode.CHASE
         self.player: Player
         self.ghosts: list[Ghost]
         self.eaten_pellets: set[tuple[int, int]]
         self.eaten_power_pellets: set[tuple[int, int]]
         self.next_level()
+
+    @property
+    def frightened(self) -> bool:
+        return self._frightened
 
     @property
     def ticks(self) -> int:
@@ -27,10 +31,6 @@ class GameState:
     @property
     def gameover(self) -> bool:
         return self._gameover
-
-    @property
-    def gamemode(self) -> GameMode:
-        return self._gamemode
 
     @property
     def player_pos(self) -> tuple[float, float]:
@@ -65,6 +65,11 @@ class GameState:
     def tick(self) -> None:
         if (self.paused or self._gameover): return
 
+        if self._frightened_timer > 0:
+            self._frightened_timer -= 1
+        else:
+            self._frightened = False
+
         self._ticks += 1
         if (self.ticks % (90 * c.FPS) == 0): self._gameover = True
 
@@ -72,7 +77,7 @@ class GameState:
 
         if len(self.level.pellets) == 0:
             self.next_level()
-        
+
         self._tick_entities()
         
         if any(math.dist(g.pos, self.player.pos) < 0.25 for g in self.ghosts):
@@ -86,6 +91,8 @@ class GameState:
             self.level.pellets.remove(self.player.cell)
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
+            self._frightened_timer = c.FPS * 10
+            self._frightened = True
                 
     def _tick_entities(self) -> None:
         self.player.tick(self.level)
