@@ -66,7 +66,7 @@ class GameState:
         if (self.paused or self._gameover): return
 
         self._ticks += 1
-        if (self.ticks % (90 * c.FPS)): self._gameover = True
+        if (self.ticks % (90 * c.FPS) == 0): self._gameover = True
 
         #add super pacgum eaten and FRIGHTENED gamemode
 
