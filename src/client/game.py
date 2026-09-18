@@ -70,28 +70,23 @@ class GameState:
 
         #add super pacgum eaten and FRIGHTENED gamemode
 
-        if self.remaining_pellets() == 0:
+        if len(self.level.pellets) == 0:
             self.next_level()
         
-        new_cell = self.player.tick(self.level)
+        self._tick_entities()
+        
         if any(math.dist(g.pos, self.player.pos) < 0.25 for g in self.ghosts):
             self.player.decrease_remaining_lives()
             if self.player.remaining_lives <= 0:
                 self._gameover = True
             else:
                 self.player.teleport_home()
+
+        if self.player.cell in self.level.pellets:
+            self.level.pellets.remove(self.player.cell)
                 
-        self._tick_entities()
-        if new_cell is None:
-            return
-        if new_cell in self.level.pellets:
-            self.eaten_pellets.add(new_cell)
-        if new_cell in self.level.power_pellets:
-            self.eaten_power_pellets.add(new_cell)
-        
-
     def _tick_entities(self) -> None:
-
+        self.player.tick(self.level)
         for ghost in self.ghosts:
             ghost.tick(self)
 
