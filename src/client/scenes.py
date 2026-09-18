@@ -110,7 +110,6 @@ class GameScene(Scene):
         self.graphics.update()
         pygame.display.set_caption(
             f"Pac-Man Maze - Level {self.game.level_number} "
-            f"- {self.game.remaining_pellets()} pellets left"
         )
         return None
 

@@ -90,10 +90,5 @@ class GameState:
         for ghost in self.ghosts:
             ghost.tick(self)
 
-    def remaining_pellets(self) -> int:
-        total = len(self.level.pellets) + len(self.level.power_pellets)
-        eaten = len(self.eaten_pellets) + len(self.eaten_power_pellets)
-        return total - eaten
-
-    def set_player_direction(self, dx: float, dy: float) -> None:
+    eef set_player_direction(self, dx: float, dy: float) -> None:
         self.player.set_input_direction((dx, dy))
