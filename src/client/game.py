@@ -90,5 +90,5 @@ class GameState:
         for ghost in self.ghosts:
             ghost.tick(self)
 
-    eef set_player_direction(self, dx: float, dy: float) -> None:
+    def set_player_direction(self, dx: float, dy: float) -> None:
         self.player.set_input_direction((dx, dy))
