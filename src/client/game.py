@@ -84,6 +84,8 @@ class GameState:
 
         if self.player.cell in self.level.pellets:
             self.level.pellets.remove(self.player.cell)
+        if self.player.cell in self.level.power_pellets:
+            self.level.power_pellets.remove(self.player.cell)
                 
     def _tick_entities(self) -> None:
         self.player.tick(self.level)
