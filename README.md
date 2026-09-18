@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by afomin, vgoh.*
+*This project has been created as part of the 42 curriculum by afomin, gemini.*
 
 # Pac-Man
 
