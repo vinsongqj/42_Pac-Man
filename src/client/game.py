@@ -80,12 +80,16 @@ class GameState:
 
         self._tick_entities()
         
-        if any(math.dist(g.pos, self.player.pos) < 0.25 for g in self.ghosts):
-            self.player.decrease_remaining_lives()
-            if self.player.remaining_lives <= 0:
-                self._gameover = True
-            else:
-                self.player.teleport_home()
+        for g in self.ghosts:
+            if math.dist(g.pos, self.player.pos) < 0.25:
+                if self._frightened:
+                    g.is_eaten = True
+                elif not g.is_eaten:
+                    self.player.decrease_remaining_lives()
+                    if self.player.remaining_lives <= 0:
+                        self._gameover = True
+                    else:
+                        self.player.teleport_home()
 
         if self.player.cell in self.level.pellets:
             self.level.pellets.remove(self.player.cell)

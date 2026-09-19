@@ -7,7 +7,7 @@ import random
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
-THRESHOLD = 1e-6
+THRESHOLD = 2e-2
 
 
 class Entity(ABC):
@@ -31,6 +31,9 @@ class Entity(ABC):
     @property
     def cell(self) -> tuple[int, int]:
         return (round(self.pos[0]), round(self.pos[1]))
+
+    def at_home(self):
+        return int(self.pos[0]) == int(self.home[0]) and int(self.pos[1]) == int(self.home[1])
 
     def move(self) -> None:
         step_x = self.direction[0] * self._speed / c.FPS
@@ -106,7 +109,23 @@ class Ghost(Entity, ABC):
     def __init__(self, name: str, pos: tuple[float, float], speed: float) -> None:
         super().__init__(pos, speed)
         self.name = name
-        self.is_eaten = False
+        self._is_eaten = False
+        self._reviving_timer = 0
+
+    @property
+    def is_eaten(self):
+        return self._is_eaten
+
+    @is_eaten.setter
+    def is_eaten(self, value: bool):
+        if value:
+            self._reviving_timer = 10 * c.FPS
+            self._is_eaten = True
+            self._speed = 4
+        else:
+            self._reviving_timer = 0
+            self._is_eaten = False
+            self._speed = 2.5
 
     @abstractmethod
     def _get_target_pos(self, game) -> tuple[int, int]:
@@ -120,15 +139,18 @@ class Ghost(Entity, ABC):
         return d
 
     def tick(self, game):
-        if self._is_aligned():
+        if self.is_eaten and self._reviving_timer <= 0:
+            self.is_eaten = False
 
+        if self._is_aligned():
             if self.is_eaten:
-                tarpos = self.home
-                self._speed = 5
-            elif game.frightened:
-                tarpos = self.home
-                self._speed = 2.5
-            else:
+                if self.at_home():
+                    self.direction = (0, 0)
+                    self._reviving_timer -= 1
+                    return
+                else:
+                    tarpos = self.home
+            elif not game.frightened:
                 tarpos = self._get_target_pos(game)
                 self._speed = 2.5
 
@@ -137,7 +159,10 @@ class Ghost(Entity, ABC):
             directions = self._get_directions(game.level)
 
             if game.frightened:
-                best_direction = random.choice(directions)
+                if not directions:
+                    best_direction = (0, 0)
+                else:
+                    best_direction = random.choice(directions)
             else:
                 for d in directions:
                     next_pos = (d[0] + self.pos[0], d[1] + self.pos[1])
