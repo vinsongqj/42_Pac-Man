@@ -1,10 +1,9 @@
 from typing import Optional
 from abc import ABC, abstractmethod
+import random
+
 from src.client.vector2 import Vector2
 import src.client.constants as c
-
-import math
-import random
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
@@ -27,7 +26,9 @@ class Entity(ABC):
 
     @pos.setter
     def pos(self, new_pos: 'Vector2') -> None:
-        self._pos = new_pos
+        if isinstance(new_pos, Vector2):
+            self._pos = new_pos
+        else: raise TypeError
 
     @property
     def home(self) -> Vector2:
@@ -39,7 +40,9 @@ class Entity(ABC):
 
     @last_move.setter
     def last_move(self, value):
-        self._last_move = value
+        if isinstance(value, Vector2):
+            self._last_move = value
+        else: raise TypeError
 
     @property
     def direction(self):
@@ -47,7 +50,9 @@ class Entity(ABC):
 
     @direction.setter
     def direction(self, value: Vector2):
-        self._direction = value
+        if isinstance(value, Vector2):
+            self._direction = value
+        else: raise TypeError
 
     @property
     def cell(self) -> Vector2:
@@ -80,18 +85,18 @@ class Player(Entity):
         self._remaining_lives = 3
 
     @property
-    def remaining_lives(self):
+    def remaining_lives(self) -> int:
         return self._remaining_lives
 
-    def decrease_remaining_lives(self):
+    def decrease_remaining_lives(self) -> None:
         self._remaining_lives -= 1
 
-    def increase_remaining_lives(self):
+    def increase_remaining_lives(self) -> None:
         self._remaining_lives += 1
 
-    def teleport_home(self):
+    def teleport_home(self) -> None:
         self._pos = self.home
-        self.direction = (0, 0)
+        self.direction = Vector2(0, 0)
 
     def set_input_direction(self, direction: Vector2) -> None:
         self.pending_direction = direction
@@ -116,11 +121,13 @@ class Player(Entity):
                     level.can_move(self.pos, self.pos + self.pending_direction)):
                 self.direction = self.pending_direction
 
-            if (self.direction != (0.0, 0.0) and
+            if (not self.direction.is_zero and
                     not level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
                 self.direction = Vector2(0, 0)
 
-        self.move()
+        if (not self.direction.is_zero and
+            level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
+            self.move()
         return new_cell
 
 
@@ -130,13 +137,17 @@ class Ghost(Entity, ABC):
                  pos: tuple[float, float],
                  speed: float) -> None:
         super().__init__(pos, speed)
-        self.name = name
+        self._name = name
         self._is_eaten = False
         self._reviving_timer = 0
 
     @property
     def is_eaten(self):
         return self._is_eaten
+
+    @property
+    def name(self):
+        return self._name
 
     @is_eaten.setter
     def is_eaten(self, value: bool):
@@ -153,23 +164,22 @@ class Ghost(Entity, ABC):
     def _get_target_pos(self, game) -> Vector2:
         ...
 
-    def _get_directions(self, level) -> Vector2:
+    def _get_directions(self, level) -> list[Vector2]:
         d = [c.UP, c.DOWN, c.RIGHT, c.LEFT]
-        if self.direction == Vector2(0, 0): return d
+        if self.direction.is_zero: return d
         if not self.is_eaten: d.remove(-self.direction)
         d = [d1 for d1 in d if (
             level.can_move(self.pos, self.pos + self.direction))]
         return d
 
     def tick(self, game):
-        print(self.pos, self.cell)
         if self.is_eaten and self._reviving_timer <= 0:
             self.is_eaten = False
 
         if self._is_aligned():
             if self.is_eaten:
                 if self.at_home():
-                    self.direction = (0, 0)
+                    self.direction = Vector2(0, 0)
                     self._reviving_timer -= 1
                     return
                 else:
@@ -179,12 +189,12 @@ class Ghost(Entity, ABC):
                 self._speed = 2.5
 
             best_distance = 99999999
-            best_direction = (0, 0)
+            best_direction = Vector2(0, 0)
             directions = self._get_directions(game.level)
 
             if game.frightened:
                 if not directions:
-                    best_direction = (0, 0)
+                    best_direction = Vector2(0, 0)
                 else:
                     best_direction = random.choice(directions)
             else:
@@ -197,8 +207,11 @@ class Ghost(Entity, ABC):
 
             self.direction = best_direction
 
-        if not self.direction.is_zero:
-            self.move()
+        directions = self._get_directions(game.level)
+        if self.direction in directions:
+
+            if not self.direction.is_zero:
+                self.move()
 
 
 class Blinky(Ghost):

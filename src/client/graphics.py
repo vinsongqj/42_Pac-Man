@@ -28,7 +28,7 @@ class Graphics:
 
     def _spawn_sprites(self) -> None:
         offset = (self.offset_x, self.offset_y)
-        self.player_sprite = PlayerSprite(self.game.player_pos, offset=offset)
+        self.player_sprite = PlayerSprite(self.game.player.pos, offset=offset)
         self.ghost_sprites = [
             GhostSprite(ghost.name, ghost.pos, offset=offset)
             for ghost in self.game.ghosts
@@ -39,7 +39,7 @@ class Graphics:
             self.ghost_sprites[index].set_direction(direction)
 
     def update(self) -> None:
-        self.player_sprite.sync(self.game.player_pos, self.game.last_move)
+        self.player_sprite.sync(self.game.player.pos, self.game.player.last_move)
         self.player_sprite.update()
         for i, ghost_sprite in enumerate(self.ghost_sprites):
             ghost = self.game.ghosts[i]

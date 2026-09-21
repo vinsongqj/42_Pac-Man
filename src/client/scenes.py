@@ -1,10 +1,13 @@
 from typing import Optional, Any
 import pygame
+
+from .vector2 import Vector2
 import src.client.constants as c
 import src.client.display as display
 from src.client.game import GameState
 from src.client.graphics import Graphics
 from src.client.scene_utils import SceneState, Scene
+
 
 MOVE_KEYS = {
     pygame.K_UP: c.UP,
@@ -181,7 +184,7 @@ class GameScene(Scene):
                 self.game.paused = not self.game.paused
             elif event.key in MOVE_KEYS:
                 dx, dy = MOVE_KEYS[event.key]
-                self.game.set_player_direction(dx, dy)
+                self.game.player.set_input_direction(Vector2(dx, dy))
                 self.game.paused = False
         return None
 

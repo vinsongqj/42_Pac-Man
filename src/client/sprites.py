@@ -1,5 +1,7 @@
 from typing import Optional, Union, cast
 import pygame
+
+from .vector2 import Vector2
 import src.client.constants as c
 from src.client.display import Image
 
@@ -161,8 +163,8 @@ class GhostSprite(Sprite):
         self._anim_timer = 0
 
     def sync(self,
-             grid_pos: tuple[int, int],
-             last_move: tuple[int, int]) -> None:
+             grid_pos: Vector2,
+             last_move: Vector2) -> None:
         direction = DIRECTION_FROM_DELTA.get(last_move)
         if direction is not None:
             self.set_direction(direction)

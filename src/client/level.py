@@ -108,20 +108,25 @@ class Level:
                 self._pellets.add(cell)
 
     def can_move(self, a: Vector2, b: Vector2) -> bool:
-        """Return True if the segment A->B stays inside walkable tiles."""
-        if not self._is_walkable(a):
-            return False
+        """
+        Checks if A->B doesn't collide with any walls.
+        Works only if A and B are in two neighbouring cells or in the same cell
+        """
 
-        dx = b.x - a.x
-        dy = b.y - a.y
-        steps = max(1, int(max(abs(dx), abs(dy)) * 8) + 1)
+        a_x = round(a.x)
+        a_y = round(a.y)
+        b_x = round(b.x)
+        b_y = round(b.y)
+        if a_x == b_x and a_y == b_y: return True
 
-        for i in range(steps + 1):
-            t = i / steps
-            x = a.x + dx * t
-            y = a.y + dy * t
-            point = Vector2(x, y)
-            if not self._is_walkable(point):
-                return False
-
+        delta_x = a_x - b_x
+        delta_y = a_y - b_y
+        if delta_x < 0:
+            return not self._maze[a_y][a_x] & 2
+        elif delta_x > 0:
+            return not self._maze[a_y][a_x] & 8
+        elif delta_y < 0:
+            return not self._maze[a_y][a_x] & 4
+        elif delta_y > 0:
+            return not self._maze[a_y][a_x] & 1
         return True

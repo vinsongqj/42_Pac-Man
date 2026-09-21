@@ -14,9 +14,9 @@ class GameState:
         self._frightened_timer = 0
         self._frightened = False
         self.generator = LevelGenerator(size)
-        self.level_number = 0
-        self.level: Level
-        self.player: Player
+        self._level_number = 0
+        self._level: Level
+        self._player: Player
         self.ghosts: list[Ghost]
         self.eaten_dots: int = 0
         self.eaten_energizers: int = 0
@@ -27,6 +27,10 @@ class GameState:
         return self._frightened
 
     @property
+    def level_number(self) -> int:
+        return self._level_number
+
+    @property
     def ticks(self) -> int:
         return self._ticks
 
@@ -35,15 +39,11 @@ class GameState:
         return self._gameover
 
     @property
-    def player_pos(self) -> tuple[float, float]:
-        return self.player.pos
-
-    @property
-    def last_move(self) -> tuple[float, float]:
-        return self.player.last_move
+    def player(self) -> Player:
+        return self._player
 
     def next_level(self) -> None:
-        self.level_number += 1
+        self._level_number += 1
         self._reset_level()
         self.paused = True
 
@@ -53,7 +53,7 @@ class GameState:
     def _reset_level(self) -> None:
         self._ticks = 0
         self.level = self.generator.generate(42)
-        self.player = Player(self.level.player_start)
+        self._player = Player(self.level.player_start)
         ghost_speed = c.GHOST_SPEED
         self.ghosts = [
             Blinky(Vector2(0, 0), ghost_speed),
@@ -102,6 +102,3 @@ class GameState:
         self.player.tick(self.level)
         for ghost in self.ghosts:
             ghost.tick(self)
-
-    def set_player_direction(self, dx: float, dy: float) -> None:
-        self.player.set_input_direction(Vector2(dx, dy))
