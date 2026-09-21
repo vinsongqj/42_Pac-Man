@@ -128,4 +128,4 @@ class Level:
             return not self._maze[a_y][a_x] & 4
         elif delta_y > 0: #UP
             return not self._maze[a_y][a_x] & 1
-        return False
+        return True

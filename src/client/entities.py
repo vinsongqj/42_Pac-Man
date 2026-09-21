@@ -207,11 +207,9 @@ class Ghost(Entity, ABC):
 
             self.direction = best_direction
 
-        directions = self._get_directions(game.level)
-        if self.direction in directions:
-
-            if not self.direction.is_zero:
-                self.move()
+        if (not self.direction.is_zero and
+            game.level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
+            self.move()
 
 
 class Blinky(Ghost):
