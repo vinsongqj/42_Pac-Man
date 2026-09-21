@@ -1,3 +1,5 @@
+from .vector2 import Vector2
+
 CELL = 40
 MARGIN = 30
 
@@ -17,10 +19,10 @@ WALL_WIDTH = 4
 NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
 FIXED_FIRST_SEED = 42
 
-UP = (0.0, -1.0)
-DOWN = (0.0, 1.0)
-LEFT = (-1.0, 0.0)
-RIGHT = (1.0, 0.0)
+UP = Vector2(0.0, -1.0)
+DOWN = Vector2(0.0, 1.0)
+LEFT = Vector2(-1.0, 0.0)
+RIGHT = Vector2(1.0, 0.0)
 
 FPS = 30.0
 PLAYER_SPEED = 3.0

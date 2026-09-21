@@ -1,44 +1,63 @@
 from typing import Optional
 from abc import ABC, abstractmethod
-
+from src.client.vector2 import Vector2
 import src.client.constants as c
+
 import math
 import random
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
-THRESHOLD = 2e-2
+THRESHOLD = 0.01
 
 
 class Entity(ABC):
     def __init__(self,
-                 pos: tuple[float, float],
-                 speed: float = 0.0) -> None:
-        self._pos: tuple[float, float] = pos
-        self._home: tuple[float, float] = pos
+                 pos: Vector2,
+                 speed: float = 0.0):
+        self._pos = pos
+        self._home = pos
         self._speed: float = speed  # cells per second
-        self.direction: tuple[float, float] = (0.0, 0.0)
-        self.last_move: tuple[float, float] = (0.0, 0.0)
+        self._direction = Vector2(0, 0)
+        self._last_move = Vector2(0, 0)
 
     @property
-    def pos(self):
+    def pos(self) -> Vector2:
         return self._pos
 
+    @pos.setter
+    def pos(self, new_pos: 'Vector2') -> None:
+        self._pos = new_pos
+
     @property
-    def home(self):
+    def home(self) -> Vector2:
         return self._home
 
     @property
-    def cell(self) -> tuple[int, int]:
-        return (round(self.pos[0]), round(self.pos[1]))
+    def last_move(self) -> Vector2:
+        return self._last_move
+
+    @last_move.setter
+    def last_move(self, value):
+        self._last_move = value
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @direction.setter
+    def direction(self, value: Vector2):
+        self._direction = value
+
+    @property
+    def cell(self) -> Vector2:
+        return Vector2(round(self.pos.x), round(self.pos.y))
 
     def at_home(self):
-        return int(self.pos[0]) == int(self.home[0]) and int(self.pos[1]) == int(self.home[1])
+        return self.pos == self.home
 
     def move(self) -> None:
-        step_x = self.direction[0] * self._speed / c.FPS
-        step_y = self.direction[1] * self._speed / c.FPS
-        self._pos = (self._pos[0] + step_x, self._pos[1] + step_y)
+        self.pos = self.pos + self.direction * self._speed / c.FPS
         self.last_move = self.direction
 
     def _is_aligned(self) -> bool:
@@ -56,8 +75,8 @@ class Player(Entity):
                  pos: tuple[float, float],
                  speed: float = c.PLAYER_SPEED) -> None:
         super().__init__(pos, speed)
-        self.pending_direction: tuple[float, float] = (0.0, 0.0)
-        self._last_cell: tuple[int, int] = self.cell
+        self.pending_direction = Vector2(0, 0)
+        self._last_cell: Vector2 = self.cell
         self._remaining_lives = 3
 
     @property
@@ -67,46 +86,49 @@ class Player(Entity):
     def decrease_remaining_lives(self):
         self._remaining_lives -= 1
 
+    def increase_remaining_lives(self):
+        self._remaining_lives += 1
+
     def teleport_home(self):
         self._pos = self.home
         self.direction = (0, 0)
 
-    def set_input_direction(self, direction: tuple[float, float]) -> None:
+    def set_input_direction(self, direction: Vector2) -> None:
         self.pending_direction = direction
 
     def tick(self, level) -> Optional[tuple[int, int]]:
         new_cell: Optional[tuple[int, int]] = None
 
-        reverse_of_current = (-self.direction[0], -self.direction[1])
-        if (self.pending_direction != (0.0, 0.0) and
-                self.pending_direction == reverse_of_current):
+        if (not self.pending_direction.is_zero and
+                self.pending_direction == -self.direction):
             self.direction = self.pending_direction
 
         if self._is_aligned():
             cell = self.cell
 
-            self._pos = (float(cell[0]), float(cell[1]))
+            self._pos = self.cell
 
             if cell != self._last_cell:
                 self._last_cell = cell
                 new_cell = cell
 
-            if (self.pending_direction != (0.0, 0.0) and
-                    level.can_move(*cell, *self.pending_direction)):
+            if (not self.pending_direction.is_zero and
+                    level.can_move(self.pos, self.pos + self.pending_direction)):
                 self.direction = self.pending_direction
 
             if (self.direction != (0.0, 0.0) and
-                    not level.can_move(*cell, *self.direction)):
-                self.direction = (0.0, 0.0)
+                    not level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
+                self.direction = Vector2(0, 0)
 
-        if self.direction != (0.0, 0.0):
-            self.move()
-
+        self.move()
         return new_cell
 
 
 class Ghost(Entity, ABC):
-    def __init__(self, name: str, pos: tuple[float, float], speed: float) -> None:
+    def __init__(self,
+                 name: str,
+                 pos: tuple[float, float],
+                 speed: float) -> None:
         super().__init__(pos, speed)
         self.name = name
         self._is_eaten = False
@@ -125,20 +147,22 @@ class Ghost(Entity, ABC):
         else:
             self._reviving_timer = 0
             self._is_eaten = False
-            self._speed = 2.5
+            self._speed = c.GHOST_SPEED
 
     @abstractmethod
-    def _get_target_pos(self, game) -> tuple[int, int]:
+    def _get_target_pos(self, game) -> Vector2:
         ...
 
-    def _get_directions(self, level) -> list[tuple[int, int]]:
-        d = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        if self.direction == (0, 0): return d
-        if not self.is_eaten: d.remove((-self.direction[0], -self.direction[1]))
-        d = [d1 for d1 in d if (level.can_move(*self.cell, *d1))]
+    def _get_directions(self, level) -> Vector2:
+        d = [c.UP, c.DOWN, c.RIGHT, c.LEFT]
+        if self.direction == Vector2(0, 0): return d
+        if not self.is_eaten: d.remove(-self.direction)
+        d = [d1 for d1 in d if (
+            level.can_move(self.pos, self.pos + self.direction))]
         return d
 
     def tick(self, game):
+        print(self.pos, self.cell)
         if self.is_eaten and self._reviving_timer <= 0:
             self.is_eaten = False
 
@@ -165,59 +189,49 @@ class Ghost(Entity, ABC):
                     best_direction = random.choice(directions)
             else:
                 for d in directions:
-                    next_pos = (d[0] + self.pos[0], d[1] + self.pos[1])
-                    distance_to_target = math.dist(next_pos, tarpos)
+                    next_pos = self.pos + d
+                    distance_to_target = next_pos.distance_to(tarpos)
                     if (distance_to_target < best_distance):
                         best_distance = distance_to_target
                         best_direction = d
 
             self.direction = best_direction
 
-        if self.direction != (0, 0):
+        if not self.direction.is_zero:
             self.move()
 
 
 class Blinky(Ghost):
-    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+    def __init__(self, pos: Vector2, speed: float) -> None:
         super().__init__('red', pos, speed)
 
-    def _get_target_pos(self, game) -> tuple[int, int]:
+    def _get_target_pos(self, game) -> Vector2:
         return game.player.pos
 
 
 class Pinky(Ghost):
-    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+    def __init__(self, pos: Vector2, speed: float) -> None:
         super().__init__('pink', pos, speed)
 
-    def _get_target_pos(self, game):
-        x, y = game.player.pos
-        dx, dy = game.player.direction
-        x = x + dx * 4
-        y = y + dy * 4
-        if dy == -1: x -= 4
-        return (x, y)
+    def _get_target_pos(self, game) -> Vector2:
+        return game.player.pos + game.player.direction * 4
 
 
 class Inky(Ghost):
-    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+    def __init__(self, pos: Vector2, speed: float) -> None:
         super().__init__('cyan', pos, speed)
     
-    def _get_target_pos(self, game):
-        blinky_x, blinky_y = game.ghosts[0].pos
-        x, y = game.player.pos
-        dx, dy = game.player.direction
-        x += dx * 2
-        y += dy * 2
-        x += (x - blinky_x)
-        y += (y - blinky_y)
-        return (x, y)
+    def _get_target_pos(self, game) -> Vector2:
+        #indexing here is stupid af
+        return 2 * game.ghosts[0].pos - (game.player.pos + game.player.pos * 2)
 
 
 class Clyde(Ghost):
-    def __init__(self, pos: tuple[float, float], speed: float) -> None:
+    def __init__(self, pos: Vector2, speed: float) -> None:
         super().__init__('yellow', pos, speed)
 
-    def _get_target_pos(self, game):
-        distance_to_pacman = math.dist(self.pos, game.player.pos)
-        if (distance_to_pacman > 8): return game.player.pos
-        else: return self.home
+    def _get_target_pos(self, game) -> Vector2:
+        if (game.player.pos.distance_to(self.pos) > 8):
+            return game.player.pos
+        else:
+            return self.home

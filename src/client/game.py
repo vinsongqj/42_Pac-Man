@@ -1,23 +1,25 @@
-from src.client.maze import Maze
 from src.client.entities import Player, Ghost, Blinky, Pinky, Inky, Clyde
 import src.client.constants as c
+from .level import Level, LevelGenerator
+from .vector2 import Vector2
+
 import math
 
 
 class GameState:
     def __init__(self, size: tuple[int, int] = (21, 21)) -> None:
-        self.paused: bool = False
         self._ticks: int = 0
+        self.paused: bool = False
+        self._gameover = False
         self._frightened_timer = 0
         self._frightened = False
-        self._gameover = False
-        self.size = size
+        self.generator = LevelGenerator(size)
         self.level_number = 0
-        self.level: Maze
+        self.level: Level
         self.player: Player
         self.ghosts: list[Ghost]
-        self.eaten_pellets: set[tuple[int, int]]
-        self.eaten_power_pellets: set[tuple[int, int]]
+        self.eaten_dots: int = 0
+        self.eaten_energizers: int = 0
         self.next_level()
 
     @property
@@ -50,14 +52,14 @@ class GameState:
 
     def _reset_level(self) -> None:
         self._ticks = 0
-        self.level = Maze(self.level_number, self.size)
+        self.level = self.generator.generate(42)
         self.player = Player(self.level.player_start)
         ghost_speed = c.GHOST_SPEED
         self.ghosts = [
-            Blinky([0, 0], ghost_speed),
-            Pinky([self.level.width - 1, 0], ghost_speed),
-            Inky([self.level.width - 1, self.level.height - 1], ghost_speed),
-            Clyde([0, self.level.height - 1], ghost_speed)
+            Blinky(Vector2(0, 0), ghost_speed),
+            Pinky(Vector2(self.level.width - 1, 0), ghost_speed),
+            Inky(Vector2(self.level.width - 1, self.level.height - 1), ghost_speed),
+            Clyde(Vector2(0, self.level.height - 1), ghost_speed)
         ]
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()
@@ -72,8 +74,6 @@ class GameState:
 
         self._ticks += 1
         if (self.ticks % (90 * c.FPS) == 0): self._gameover = True
-
-        #add super pacgum eaten and FRIGHTENED gamemode
 
         if len(self.level.pellets) == 0:
             self.next_level()
@@ -104,4 +104,4 @@ class GameState:
             ghost.tick(self)
 
     def set_player_direction(self, dx: float, dy: float) -> None:
-        self.player.set_input_direction((dx, dy))
+        self.player.set_input_direction(Vector2(dx, dy))
