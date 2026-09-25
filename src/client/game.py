@@ -57,9 +57,9 @@ class GameState:
         ghost_speed = c.GHOST_SPEED
         self.ghosts = [
             Blinky(Vector2(0, 0), ghost_speed),
-            #Pinky(Vector2(self.level.width - 1, 0), ghost_speed),
-            #Inky(Vector2(self.level.width - 1, self.level.height - 1), ghost_speed),
-            #Clyde(Vector2(0, self.level.height - 1), ghost_speed)
+            Pinky(Vector2(self.level.width - 1, 0), ghost_speed),
+            Inky(Vector2(self.level.width - 1, self.level.height - 1), ghost_speed),
+            Clyde(Vector2(0, self.level.height - 1), ghost_speed)
         ]
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()

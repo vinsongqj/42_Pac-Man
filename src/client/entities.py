@@ -157,7 +157,7 @@ class Ghost(Entity, ABC):
         if value:
             self._reviving_timer = 10 * c.FPS
             self._is_eaten = True
-            self._speed = 4
+            self._speed = 3
         else:
             self._reviving_timer = 0
             self._is_eaten = False
@@ -186,6 +186,7 @@ class Ghost(Entity, ABC):
                     self._reviving_timer -= 1
                     return
                 else:
+                    self._reviving_timer = c.FPS * 10
                     tarpos = self.home
             elif not game.frightened:
                 tarpos = self._get_target_pos(game)
@@ -235,7 +236,6 @@ class Inky(Ghost):
         super().__init__('cyan', pos, speed)
     
     def _get_target_pos(self, game) -> Vector2:
-        #indexing here is stupid af
         return 2 * game.ghosts[0].pos - (game.player.pos + game.player.pos * 2)
 
 

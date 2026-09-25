@@ -1,5 +1,6 @@
 from collections import deque
 
+from .constants import UP, DOWN, LEFT, RIGHT
 from mazegenerator import MazeGenerator  # type: ignore[import-not-found]
 from src.client.vector2 import Vector2
 
@@ -55,6 +56,22 @@ class Level:
     @property
     def ghost_starts(self) -> list[Vector2]:
         return self._ghost_starts
+
+    def bfs_distances(self, target: Vector2):
+        queue = deque(target)
+        visited = []
+        came_from = {}
+        while queue:
+            cell = queue.pop()
+            neighbours = self.get_walkable_neighbours(cell)
+            for n in neighbours:
+                came_from[n] = cell
+
+    def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
+        result = []
+        for d in [DOWN, LEFT, RIGHT, UP]:
+            if self.can_move(a, a + d): result.append(a + d)
+        return d
 
     def _is_walkable(self, point: Vector2) -> bool:
         return (0 <= point.x < self.width and
