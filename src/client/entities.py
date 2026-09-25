@@ -7,7 +7,7 @@ import src.client.constants as c
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
-THRESHOLD = 0.01
+THRESHOLD = 0.05
 
 
 class Entity(ABC):
@@ -62,6 +62,10 @@ class Entity(ABC):
         return self.pos == self.home
 
     def move(self) -> None:
+        if self.direction.x != 0:
+            self.pos = Vector2(self.pos.x, round(self.pos.y))
+        if self.direction.y != 0:
+            self.pos = Vector2(round(self.pos.x), self.pos.y)
         self.pos = self.pos + self.direction * self._speed / c.FPS
         self.last_move = self.direction
 
@@ -122,11 +126,10 @@ class Player(Entity):
                 self.direction = self.pending_direction
 
             if (not self.direction.is_zero and
-                    not level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
+                    not level.can_move(self.pos, self.pos + self.direction)):
                 self.direction = Vector2(0, 0)
 
-        if (not self.direction.is_zero and
-            level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
+        if (level.can_move(self.pos, self.pos + self.direction * 0.5)):
             self.move()
         return new_cell
 
@@ -169,7 +172,7 @@ class Ghost(Entity, ABC):
         if self.direction.is_zero: return d
         if not self.is_eaten: d.remove(-self.direction)
         d = [d1 for d1 in d if (
-            level.can_move(self.pos, self.pos + self.direction))]
+            level.can_move(self.pos, self.pos + d1))]
         return d
 
     def tick(self, game):
@@ -186,7 +189,7 @@ class Ghost(Entity, ABC):
                     tarpos = self.home
             elif not game.frightened:
                 tarpos = self._get_target_pos(game)
-                self._speed = 2.5
+                self._speed = c.GHOST_SPEED
 
             best_distance = 99999999
             best_direction = Vector2(0, 0)
@@ -206,9 +209,8 @@ class Ghost(Entity, ABC):
                         best_direction = d
 
             self.direction = best_direction
-
-        if (not self.direction.is_zero and
-            game.level.can_move(self.pos, self.pos + self.direction * self._speed / c.FPS)):
+    
+        if (game.level.can_move(self.pos, self.pos + self.direction * 0.5)):
             self.move()
 
 
