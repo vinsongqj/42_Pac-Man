@@ -57,21 +57,41 @@ class Level:
     def ghost_starts(self) -> list[Vector2]:
         return self._ghost_starts
 
-    def bfs_distances(self, target: Vector2):
-        queue = deque(target)
+    def bfs(self, a: Vector2, b: Vector2) -> deque[Vector2] | None:
+        a = a.round()
+        b = b.round()
+        queue = deque([a])
         visited = []
         came_from = {}
-        while queue:
-            cell = queue.pop()
+        flag = True
+
+        while flag and queue:
+            cell = queue.popleft()
             neighbours = self.get_walkable_neighbours(cell)
             for n in neighbours:
-                came_from[n] = cell
+                if n not in visited:
+                    visited.append(n)
+                    came_from[n] = cell
+                    if n == b.round():
+                        flag = False
+                        break
+                    queue.append(n)
+        if not queue and flag: return None
+        cell = b
+        path = [cell]
+        while cell != a:
+            if cell in came_from:
+                cell = came_from[cell]
+                if cell == a: break
+                path.append(cell)
+        path.reverse()
+        return deque(path)
 
     def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
         result = []
         for d in [DOWN, LEFT, RIGHT, UP]:
             if self.can_move(a, a + d): result.append(a + d)
-        return d
+        return result
 
     def _is_walkable(self, point: Vector2) -> bool:
         return (0 <= point.x < self.width and

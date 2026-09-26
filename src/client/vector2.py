@@ -3,8 +3,8 @@ import math
 
 class Vector2:
     def __init__(self, x: float | int, y: float | int):
-        self._x = float(x)
-        self._y = float(y)
+        self._x = x
+        self._y = y
 
     @property
     def x(self) -> float:
@@ -17,6 +17,9 @@ class Vector2:
     @property
     def is_zero(self) -> bool:
         return math.isclose(self.x, 0.0) and math.isclose(self.y, 0.0)
+
+    def round(self) -> 'Vector2':
+        return Vector2(round(self._x), round(self._y))
 
     def __iter__(self):
         yield self._x
