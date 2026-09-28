@@ -20,7 +20,7 @@ public class DbManager : IDbManager
 
     public async Task<List<User>> GetUsersByScoreAsync(int amount)
     {
-        return await _context.Users.OrderBy(u => u.BestScore).Take(amount).ToListAsync();
+        return await _context.Users.OrderByDescending(u => u.BestScore).Take(amount).ToListAsync();
     }
 
     public async Task CreateUserAsync(string name)
