@@ -13,6 +13,18 @@ public class DbManager : IDbManager
         await _context.SaveChangesAsync();
     }
 
+    public async Task<bool> DeleteUserAsync(string name)
+    {
+        User? user = await GetUserAsync(name);
+        if (user != null) 
+        {
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        return false;
+    }
+
     public async Task<User?> GetUserAsync(string name)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Name == name);

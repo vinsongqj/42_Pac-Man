@@ -11,6 +11,11 @@ public class Orchestrator
         _manager = manager;
     }
 
+    public async Task<bool> DeleteUserAsync(string name)
+    {
+        return await _manager.DeleteUserAsync(name);
+    }
+
     public async Task<List<UserDTO>> GetLeaderboardAsync(int size)
     {
         List<User> users = await _manager.GetUsersByScoreAsync(size);

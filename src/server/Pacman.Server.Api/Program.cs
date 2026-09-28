@@ -27,6 +27,16 @@ app.MapPut("/user", async (string name, int newScore, Orchestrator o) =>
     return Results.Ok();
 });
 
+app.MapDelete("/user", async (string name, Orchestrator o) =>
+{
+    if (name.Length <= 2) return Results.BadRequest("The name must be at least 3 chars long");
+
+    if (await o.DeleteUserAsync(name))
+        return Results.NoContent();
+    else
+        return Results.BadRequest("User not found");
+});
+
 app.MapGet("/leaderboard", async (int size, Orchestrator o) =>
 {
     if (size < 1) return Results.BadRequest("The size can not be less than 1.");

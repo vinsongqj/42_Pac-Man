@@ -4,6 +4,8 @@ public interface IDbManager
 {
     public Task SaveChangesAsync();
 
+    public Task<bool> DeleteUserAsync(string name);
+
     public Task<User?> GetUserAsync(string name);
 
     public Task<List<User>> GetUsersByScoreAsync(int amount);
