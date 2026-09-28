@@ -97,7 +97,8 @@ class Text(Element):
 
 class Image(Element):
 
-    _surface_cache: dict[tuple, pygame.Surface] = {}
+    _surface_cache: dict[tuple[str, Optional[tuple[int, int]], bool],
+                         pygame.Surface] = {}
 
     def __init__(
             self,

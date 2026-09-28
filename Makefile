@@ -18,11 +18,11 @@ clean:
 
 lint:
 	@flake8 . --exclude=./venv,venv,*/venv/*,.venv
-	@mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --exclude='^venv/'
+	@mypy --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --exclude '^venv/' --explicit-package-bases src/client pac-man.py
 
 lint-strict:
 	@flake8 . --exclude=./venv,venv,*/venv/*,.venv
-	@mypy . --strict --exclude='^venv/'
+	@mypy --strict --exclude='^venv/' --explicit-package-bases src/client pac-man.py
 
 help:
 	@echo "Available commands:"

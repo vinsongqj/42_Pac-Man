@@ -13,7 +13,7 @@ DIRECTION_ANGLES = {
     "DOWN": 270,
 }
 
-DIRECTION_FROM_DELTA = {
+DIRECTION_FROM_DELTA: dict[Vector2, str] = {
     c.UP: "UP",
     c.DOWN: "DOWN",
     c.LEFT: "LEFT",
@@ -133,13 +133,13 @@ class PlayerSprite(Sprite):
         self._anim_timer = 0
 
     def sync(self,
-             grid_pos: tuple[int, int],
-             last_move: tuple[int, int]) -> None:
+             grid_pos: Vector2,
+             last_move: Vector2) -> None:
         direction = DIRECTION_FROM_DELTA.get(last_move)
         if direction is not None:
             self.set_direction(direction)
         x, y = grid_pos
-        self.set_grid_pos(x, y)
+        self.set_grid_pos(int(x), int(y))
 
     def update(self) -> None:
         self._anim_timer += 1
@@ -169,7 +169,7 @@ class GhostSprite(Sprite):
         if direction is not None:
             self.set_direction(direction)
         x, y = grid_pos
-        self.set_grid_pos(x, y)
+        self.set_grid_pos(int(x), int(y))
 
     def update(self) -> None:
         self._anim_timer += 1

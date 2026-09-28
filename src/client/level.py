@@ -1,7 +1,7 @@
 from collections import deque
 
 from src.client.constants import UP, DOWN, LEFT, RIGHT
-from mazegenerator import MazeGenerator  # type: ignore[import-not-found]
+from mazegenerator import MazeGenerator
 from src.client.vector2 import Vector2
 
 

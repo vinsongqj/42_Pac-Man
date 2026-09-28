@@ -28,9 +28,14 @@ class Graphics:
 
     def _spawn_sprites(self) -> None:
         offset = (self.offset_x, self.offset_y)
-        self.player_sprite = PlayerSprite(self.game.player.pos, offset=offset)
+        player_pos = self.game.player.pos
+        self.player_sprite = PlayerSprite(
+            (int(player_pos.x), int(player_pos.y)), offset=offset
+        )
         self.ghost_sprites = [
-            GhostSprite(ghost.name, ghost.pos, offset=offset)
+            GhostSprite(
+                ghost.name, (int(ghost.pos.x), int(ghost.pos.y)), offset=offset
+            )
             for ghost in self.game.ghosts
         ]
 
@@ -93,14 +98,14 @@ class Graphics:
                                      c.WALL_WIDTH)
 
     def _draw_pellets(self, screen: "pygame.Surface") -> None:
-        for (x, y) in self.game.level.pellets - self.game.eaten_pellets:
+        for pos in self.game.level.pellets - self.game.eaten_pellets:
             pygame.draw.circle(screen,
                                c.DOT_COLOR,
-                               self._cell_center(x, y),
+                               self._cell_center(int(pos.x), int(pos.y)),
                                c.DOT_RADIUS)
-        for (x, y) in (self.game.level.power_pellets
-                       - self.game.eaten_power_pellets):
+        for pos in (self.game.level.power_pellets
+                    - self.game.eaten_power_pellets):
             pygame.draw.circle(screen,
                                c.POWER_COLOR,
-                               self._cell_center(x, y),
+                               self._cell_center(int(pos.x), int(pos.y)),
                                c.POWER_RADIUS)

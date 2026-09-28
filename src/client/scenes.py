@@ -50,7 +50,7 @@ class MenuScene(Scene):
             anchor="center",
         )
 
-        score_data = [
+        score_data: list[dict[str, Any]] = [
             {"name": "Alex",
              "bestScore": 1000},
             {"name": "Bob",
@@ -87,7 +87,7 @@ class MenuScene(Scene):
         for idx, entry in enumerate(score_data[:10]):
             row_y = start_y + (idx * line_height)
 
-            raw_name = entry["name"] if entry["name"] else "-"
+            raw_name: str = str(entry["name"]) if entry["name"] else "-"
             if len(raw_name) > max_name_length:
                 formatted_name = f"{raw_name[:max_name_length]}..."
             else:
