@@ -59,34 +59,52 @@ class Level:
         return self._ghost_starts
 
     def bfs(self, a: Vector2, b: Vector2) -> deque[Vector2] | None:
-        a = a.round()
-        b = b.round()
-        queue = deque([a])
-        visited = []
-        came_from = {}
-        flag = True
+        """Shortest path from a to b (excluding a, including b).
 
-        while flag and queue:
-            cell = queue.popleft()
-            neighbours = self.get_walkable_neighbours(cell)
-            for n in neighbours:
-                if n not in visited:
-                    visited.append(n)
-                    came_from[n] = cell
-                    if n == b.round():
-                        flag = False
-                        break
-                    queue.append(n)
-        if not queue and flag:
+        Returns None if b is off the map, is a wall, or is unreachable,
+        and an empty deque if a and b are the same cell.
+        """
+        a, b = a.round(), b.round()
+        if not self._is_walkable(b) or not self._is_walkable(a):
             return None
-        cell = b
-        path = [cell]
-        while cell != a:
-            if cell in came_from:
-                cell = came_from[cell]
-                if cell == a:
+        start = (int(a.x), int(a.y))
+        goal = (int(b.x), int(b.y))
+        if start == goal:
+            return deque()
+
+        # Plain int tuples are much cheaper than Vector2 objects here.
+        # Order (down, left, right, up) matches get_walkable_neighbours.
+        steps = ((0, 1, 4), (-1, 0, 8), (1, 0, 2), (0, -1, 1))
+        maze = self._maze
+        width, height = self._width, self._height
+
+        came_from: dict[tuple[int, int], tuple[int, int]] = {start: start}
+        queue = deque([start])
+        found = False
+        while queue and not found:
+            x, y = queue.popleft()
+            walls = maze[y][x]
+            for dx, dy, wall_bit in steps:
+                if walls & wall_bit:
+                    continue
+                nx, ny = x + dx, y + dy
+                if not (0 <= nx < width and 0 <= ny < height):
+                    continue
+                if (nx, ny) in came_from:
+                    continue
+                came_from[(nx, ny)] = (x, y)
+                if (nx, ny) == goal:
+                    found = True
                     break
-                path.append(cell)
+                queue.append((nx, ny))
+        if not found:
+            return None
+
+        path: list[Vector2] = []
+        cell = goal
+        while cell != start:
+            path.append(Vector2(cell[0], cell[1]))
+            cell = came_from[cell]
         path.reverse()
         return deque(path)
 
@@ -158,6 +176,12 @@ class Level:
         a_y = round(a.y)
         b_x = round(b.x)
         b_y = round(b.y)
+
+        # Out of range coordinates would otherwise wrap around via
+        # negative list indices (or raise IndexError).
+        if not (0 <= a_x < self.width and 0 <= a_y < self.height and
+                0 <= b_x < self.width and 0 <= b_y < self.height):
+            return False
 
         delta_x = a_x - b_x
         delta_y = a_y - b_y

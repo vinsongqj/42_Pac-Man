@@ -75,7 +75,13 @@ class Entity(ABC):
         self.last_move = self.direction
 
     def _is_aligned(self) -> bool:
-        return self.pos.distance_to(self.pos.round()) < THRESHOLD
+        # Half a step per tick: an entity is only "aligned" when it has
+        # landed within half a step of a cell centre. That guarantees it
+        # is aligned at least once per cell (no skipped turns) and never
+        # right after leaving a centre (which used to snap it back and
+        # leave it stuck when the step equalled THRESHOLD).
+        half_step = self._speed / c.FPS / 2
+        return self.pos.distance_to(self.pos.round()) < max(half_step, 1e-3)
 
     @abstractmethod
     def tick(self, *args: object, **kwargs: object) -> Optional[Vector2]:

@@ -158,6 +158,7 @@ class MenuScene(Scene):
 
 class GameScene(Scene):
     def on_enter(self, **kwargs: Any) -> None:
+        self._caption_level: Optional[int] = None
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
                      else GameState(size=(21, 21)))
@@ -191,9 +192,11 @@ class GameScene(Scene):
     def update(self) -> None:
         self.game.tick()
         self.graphics.update()
-        pygame.display.set_caption(
-            f"Pac-Man Maze - Level {self.game.level_number} "
-        )
+        if self._caption_level != self.game.level_number:
+            self._caption_level = self.game.level_number
+            pygame.display.set_caption(
+                f"Pac-Man Maze - Level {self.game.level_number} "
+            )
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:

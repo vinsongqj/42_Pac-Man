@@ -68,6 +68,13 @@ class Sprite(Image):
         self.grid_x, self.grid_y = x, y
         self.layout.apply_position(self._pixel_pos(x, y))
 
+    def set_float_pos(self, x: float, y: float) -> None:
+        """Position the sprite at a fractional grid coordinate so movement
+        is drawn smoothly instead of snapping from cell to cell."""
+        px = self.offset_x + c.MARGIN + x * c.CELL + c.CELL // 2
+        py = self.offset_y + c.MARGIN + y * c.CELL + c.CELL // 2
+        self.layout.apply_position((round(px), round(py)))
+
     def set_offset(self, offset_x: int, offset_y: int) -> None:
         self.offset_x, self.offset_y = offset_x, offset_y
         self.layout.apply_position(self._pixel_pos(self.grid_x, self.grid_y))
@@ -139,7 +146,7 @@ class PlayerSprite(Sprite):
         if direction is not None:
             self.set_direction(direction)
         x, y = grid_pos
-        self.set_grid_pos(int(x), int(y))
+        self.set_float_pos(x, y)
 
     def update(self) -> None:
         self._anim_timer += 1
@@ -169,7 +176,7 @@ class GhostSprite(Sprite):
         if direction is not None:
             self.set_direction(direction)
         x, y = grid_pos
-        self.set_grid_pos(int(x), int(y))
+        self.set_float_pos(x, y)
 
     def update(self) -> None:
         self._anim_timer += 1

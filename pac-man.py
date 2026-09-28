@@ -1,10 +1,8 @@
 import sys
 import pygame
+import src.client.constants as c
 from src.client.scene_utils import SceneState, SceneManager
 from src.client.scenes import MenuScene, GameScene, MENU_WIDTH, MENU_HEIGHT
-
-
-FPS = 30
 
 
 def main() -> None:
@@ -45,7 +43,7 @@ def main() -> None:
 
         manager.draw(screen)
         pygame.display.flip()
-        clock.tick(FPS)
+        clock.tick(c.FPS)
 
     pygame.quit()
     sys.exit()

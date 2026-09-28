@@ -24,7 +24,7 @@ DOWN = Vector2(0.0, 1.0)
 LEFT = Vector2(-1.0, 0.0)
 RIGHT = Vector2(1.0, 0.0)
 
-FPS = 30.0
+FPS = 60.0
 PLAYER_SPEED = 3.0
 GHOST_SPEED = 2.5
 
@@ -45,7 +45,7 @@ GHOST_SPRITE_FRAMES = {
     for name in GHOST_NAMES
 }
 
-GHOST_FRAME_INTERVAL = 6
-PLAYER_FRAME_INTERVAL = 4
+GHOST_FRAME_INTERVAL = 12
+PLAYER_FRAME_INTERVAL = 8
 
 MAIN_MENU_PACMAN_IMAGE = "assets/images/main_menu/pacman.png"

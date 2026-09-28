@@ -7,6 +7,8 @@ from src.client.game import GameState
 class Graphics:
     def __init__(self, game: GameState) -> None:
         self.game = game
+        self._wall_surface: pygame.Surface | None = None
+        self._wall_level: object | None = None
         self._spawn_sprites()
 
     @property
@@ -52,9 +54,20 @@ class Graphics:
             ghost_sprite.sync(ghost.pos, ghost.last_move)
             ghost_sprite.update()
 
+    def _get_wall_surface(self) -> pygame.Surface:
+        """Walls never change within a level, so render them once and
+        rebuild only when the Level object is replaced."""
+        if (self._wall_surface is None
+                or self._wall_level is not self.game.level):
+            surf = pygame.Surface(self.screen_size).convert()
+            surf.fill(c.BG_COLOR)
+            self._draw_walls(surf)
+            self._wall_surface = surf
+            self._wall_level = self.game.level
+        return self._wall_surface
+
     def draw(self, screen: "pygame.Surface") -> None:
-        screen.fill(c.BG_COLOR)
-        self._draw_walls(screen)
+        screen.blit(self._get_wall_surface(), (0, 0))
         self._draw_pellets(screen)
         for ghost_sprite in self.ghost_sprites:
             ghost_sprite.draw(screen)
@@ -98,13 +111,12 @@ class Graphics:
                                      c.WALL_WIDTH)
 
     def _draw_pellets(self, screen: "pygame.Surface") -> None:
-        for pos in self.game.level.pellets - self.game.eaten_pellets:
+        for pos in self.game.level.pellets:
             pygame.draw.circle(screen,
                                c.DOT_COLOR,
                                self._cell_center(int(pos.x), int(pos.y)),
                                c.DOT_RADIUS)
-        for pos in (self.game.level.power_pellets
-                    - self.game.eaten_power_pellets):
+        for pos in self.game.level.power_pellets:
             pygame.draw.circle(screen,
                                c.POWER_COLOR,
                                self._cell_center(int(pos.x), int(pos.y)),
