@@ -100,3 +100,4 @@ GHOST_FRAME_INTERVAL = 12
 PLAYER_FRAME_INTERVAL = 8
 
 MAIN_MENU_PACMAN_IMAGE = "assets/images/main_menu/pacman.png"
+PACMAN_IMAGE = "assets/images/pacman.png"

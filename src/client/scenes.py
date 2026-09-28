@@ -35,6 +35,34 @@ NAME_INPUT_GRACE_MS = 500
 # Distance from the name box centre down to the first menu option.
 NAME_SCREEN_OPTIONS_GAP = 150
 JUMPSCARE_MS = 500
+# Victory intro: the pacman image floats up from the bottom right to the
+# centre of the screen over the live game. From there it eases (zooms, moves
+# and rotates all at once) into the spot set below and stays there as the
+# backdrop. The victory screen (dim layer + UI) appears VICTORY_UI_DELAY_MS
+# after that has finished.
+VICTORY_PACMAN_IMAGE: str = c.PACMAN_IMAGE
+VICTORY_PACMAN_SIZE: Optional[tuple[int, int]] = None  # None = native size
+VICTORY_RISE_MS = 1000         # time to float up to the screen centre
+VICTORY_ZOOM_MS = 800          # time to ease from the centre into place
+# Final size of the image, as a multiple of its starting size.
+# None = automatic: exactly big enough to cover the whole screen.
+# Tweak this (e.g. 2.0, 3.5) to make it smaller or larger.
+VICTORY_ZOOM_SCALE: Optional[float] = 2.7
+# Final position: the chosen point of the (zoomed) image (VICTORY_ANCHOR) is
+# pinned to the same point of the screen, then moved by VICTORY_OFFSET.
+# VICTORY_OFFSET = (dx, dy, rotation):
+#   dx: pixels, +right    dy: pixels, +down
+#   rotation: degrees, +clockwise (negative = counter-clockwise), turned
+#             about the image's centre. It eases in from 0 along with the
+#             move, so the slide-in stays upright.
+# Anchors: "center", "midtop", "midbottom", "midleft", "midright",
+#          "topleft", "topright", "bottomleft", "bottomright"
+# Note: the automatic cover size assumes a centred, unrotated image; if you
+# move, re-anchor or rotate it and gaps appear at the edges, set
+# VICTORY_ZOOM_SCALE higher.
+VICTORY_ANCHOR: str = "center"
+VICTORY_OFFSET: tuple[float, float, float] = (-40, 150, 0)
+VICTORY_UI_DELAY_MS = 400      # extra beat before the UI shows
 JUMPSCARE_SHAKE_PX = 12
 JUMPSCARE_IMAGE: Optional[str] = "assets/images/jumpscare.png"
 
@@ -132,12 +160,62 @@ class MenuScene(Scene):
             anchor="center",
         )
 
+        # ESC opens a small QUIT confirmation menu over the main menu.
+        self._quit_menu_open = False
+        self._quit_selected = 0
+        self._quit_options: list[MenuOption] = [
+            ("RESUME", lambda: None),
+            ("QUIT", lambda: SceneState.QUIT),
+        ]
+        self._quit_overlay = pygame.Surface((MENU_WIDTH, MENU_HEIGHT),
+                                            pygame.SRCALPHA)
+        self._quit_overlay.fill((0, 0, 0, 190))
+        self._quit_title_text = display.Text(
+            "QUIT GAME?", 60, "White", (rect.centerx, 380),
+            anchor="midtop")
+        self._quit_items: list[tuple[display.Text, display.Text]] = []
+        opt_y = 520
+        for label, _ in self._quit_options:
+            normal = display.Text(label, 40, (200, 200, 200),
+                                  (rect.centerx, opt_y), anchor="center")
+            highlighted = display.Text(label, 40, c.PLAYER_COLOR,
+                                       (rect.centerx, opt_y),
+                                       anchor="center")
+            self._quit_items.append((normal, highlighted))
+            opt_y += 70
+        self._quit_hint_text = display.Text(
+            "ENTER TO SELECT   ESC TO CANCEL", 20, HINT_COLOR,
+            (rect.centerx, opt_y + 30), anchor="center")
+
     def screen_size(self) -> tuple[int, int]:
         return MENU_WIDTH, MENU_HEIGHT
 
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+        if event.type != pygame.KEYDOWN:
+            return None
+
+        if self._quit_menu_open:
+            if event.key in (pygame.K_UP, pygame.K_w):
+                self._quit_selected = (
+                    (self._quit_selected - 1) % len(self._quit_options))
+            elif event.key in (pygame.K_DOWN, pygame.K_s):
+                self._quit_selected = (
+                    (self._quit_selected + 1) % len(self._quit_options))
+            elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER,
+                               pygame.K_SPACE):
+                result = self._quit_options[self._quit_selected][1]()
+                self._quit_menu_open = False
+                return result
+            elif event.key == pygame.K_ESCAPE:
+                self._quit_menu_open = False
+            return None
+
+        if event.key == pygame.K_ESCAPE:
+            self._quit_menu_open = True
+            self._quit_selected = 0
+            return None
+        if event.key == pygame.K_SPACE:
             return SceneState.PLAYING
         return None
 
@@ -159,6 +237,14 @@ class MenuScene(Scene):
             rank_text.draw(surface)
             name_text.draw(surface)
             score_text.draw(surface)
+
+        if self._quit_menu_open:
+            surface.blit(self._quit_overlay, (0, 0))
+            self._quit_title_text.draw(surface)
+            for i, (normal, highlighted) in enumerate(self._quit_items):
+                (highlighted if i == self._quit_selected
+                 else normal).draw(surface)
+            self._quit_hint_text.draw(surface)
 
 
 class HUD:
@@ -354,6 +440,14 @@ InfoLine = tuple[str, display.ColorType]
 
 HINT_COLOR = (140, 140, 140)
 
+# Vertical scrolling trail of ghosts along the left and right edges of the
+# game-over and victory screens. Which sprite is used is up to the
+# subclass (see OverlayMenuScene.trail_frames).
+GHOST_TRAIL_MARGIN = 70        # distance from each side edge to the column
+GHOST_TRAIL_ICON_SIZE = (64, 64)
+GHOST_TRAIL_GAP = 100          # pixel distance between icon centres
+GHOST_TRAIL_SPEED = 45.0      # pixels per second; negative scrolls upward
+
 
 class OverlayMenuScene(Scene):
     """Base for pause / victory / game over: the frozen game is drawn
@@ -395,6 +489,16 @@ class OverlayMenuScene(Scene):
     def on_escape(self) -> SceneResult:
         return None
 
+    def draw_behind_dim(self, surface: "pygame.Surface") -> None:
+        """Drawn on top of the frozen game but before the dim layer, so
+        anything added here is darkened together with the background."""
+
+    def trail_frames(self) -> list[str]:
+        """Image paths for the scrolling ghost trail along the top of the
+        screen, one icon per path, repeated to fill the width. Return an
+        empty list (the default) for no trail."""
+        return []
+
     # ----- helpers -----
     def _game_kwargs(self) -> dict[str, Any]:
         return {"game": self.game, "graphics": self.graphics}
@@ -411,6 +515,12 @@ class OverlayMenuScene(Scene):
         self._overlay = pygame.Surface((MENU_WIDTH, MENU_HEIGHT),
                                        pygame.SRCALPHA)
         self._overlay.fill((0, 0, 0, 170))
+
+        self._trail_images = [
+            display.Image.load_surface(path, GHOST_TRAIL_ICON_SIZE)
+            for path in self.trail_frames()
+        ]
+        self._trail_start = pygame.time.get_ticks()
 
         self.title_text = display.Text(
             self.title, 80, self.title_color, (cx, 200), anchor="midtop")
@@ -546,12 +656,35 @@ class OverlayMenuScene(Scene):
             pygame.draw.rect(surface, c.PLAYER_COLOR,
                              pygame.Rect(x, cy - 16, 3, 32))
 
+    def _draw_trail(self, surface: "pygame.Surface") -> None:
+        images = self._trail_images
+        if not images:
+            return
+        gap = GHOST_TRAIL_GAP
+        pattern_height = gap * len(images)
+        elapsed_s = (pygame.time.get_ticks() - self._trail_start) / 1000.0
+        # Python's % always returns a value in [0, pattern_height), so this
+        # wraps cleanly whether GHOST_TRAIL_SPEED is positive or negative.
+        scroll = (elapsed_s * GHOST_TRAIL_SPEED) % pattern_height
+        for column_x in (GHOST_TRAIL_MARGIN,
+                         MENU_WIDTH - GHOST_TRAIL_MARGIN):
+            y = -pattern_height + scroll
+            while y < MENU_HEIGHT + gap:
+                for image in images:
+                    if -gap < y < MENU_HEIGHT + gap:
+                        rect = image.get_rect(
+                            center=(column_x, round(y)))
+                        surface.blit(image, rect)
+                    y += gap
+
     def draw(self, surface: "pygame.Surface") -> None:
         if self.graphics is not None:
             self.graphics.draw(surface)
         else:
             surface.fill("black")
+        self.draw_behind_dim(surface)
         surface.blit(self._overlay, (0, 0))
+        self._draw_trail(surface)
         self.title_text.draw(surface)
         for text in self._info_texts:
             text.draw(surface)
@@ -636,12 +769,139 @@ class GameOverScene(ScoreScreen):
         level = self.game.level_number if self.game is not None else 1
         return f"Level {level}"
 
+    def trail_frames(self) -> list[str]:
+        # The ghosts won: show them scared, fleeing.
+        frames = c.GHOST_FRIGHTENED_FRAMES["RIGHT"]
+        return [frames[i % len(frames)] for i in range(len(c.GHOST_NAMES))]
+
 
 class VictoryScene(ScoreScreen):
     """Shown once, after the final level (c.MAX_LEVELS) is cleared."""
 
-    title = "VICTORY!"
-    title_color = c.PLAYER_COLOR
+    title = "YOU WIN!"
+    title_color = (255, 255, 255)
 
     def headline(self) -> str:
         return f"All {c.MAX_LEVELS} levels cleared"
+
+    def trail_frames(self) -> list[str]:
+        # The player won: show the ghosts normal and in their own colours.
+        return [c.GHOST_SPRITE_FRAMES[name]["RIGHT"][0]
+                for name in c.GHOST_NAMES]
+
+    def on_enter(self, **kwargs: Any) -> None:
+        super().on_enter(**kwargs)
+        self._pacman = display.Image.load_surface(
+            VICTORY_PACMAN_IMAGE, VICTORY_PACMAN_SIZE)
+        self._zoom_scale = self._final_scale()
+        self._final_center = self._compute_final_center()
+        self._final_pacman: Optional[pygame.Surface] = None
+        self._anim_start = pygame.time.get_ticks()
+        # The name field must not accept keys while the intro plays.
+        self._input_ready_at = (self._anim_start + self._intro_ms()
+                                + NAME_INPUT_GRACE_MS)
+
+    @staticmethod
+    def _intro_ms() -> int:
+        return VICTORY_RISE_MS + VICTORY_ZOOM_MS + VICTORY_UI_DELAY_MS
+
+    def _elapsed(self) -> int:
+        return pygame.time.get_ticks() - self._anim_start
+
+    def _intro_done(self) -> bool:
+        return self._elapsed() >= self._intro_ms()
+
+    def _final_scale(self) -> float:
+        if VICTORY_ZOOM_SCALE is not None:
+            return VICTORY_ZOOM_SCALE
+        w, h = self._pacman.get_size()
+        return max(MENU_WIDTH / w, MENU_HEIGHT / h)
+
+    def _compute_final_center(self) -> tuple[int, int]:
+        """Centre of the final image: VICTORY_ANCHOR (of the zoomed, upright
+        image) pinned to the matching screen point, plus the offset."""
+        dx, dy, _ = VICTORY_OFFSET
+        w, h = self._pacman.get_size()
+        rect = pygame.Rect(0, 0, round(w * self._zoom_scale),
+                           round(h * self._zoom_scale))
+        screen_rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
+        ax, ay = getattr(screen_rect, VICTORY_ANCHOR)
+        setattr(rect, VICTORY_ANCHOR, (round(ax + dx), round(ay + dy)))
+        return rect.center
+
+    def draw_behind_dim(self, surface: "pygame.Surface") -> None:
+        elapsed = self._elapsed()
+        screen_cx, screen_cy = MENU_WIDTH // 2, MENU_HEIGHT // 2
+        # pygame rotates counter-clockwise; the setting is clockwise.
+        final_angle = -VICTORY_OFFSET[2]
+
+        # Phase 1: slide in from the bottom right to the screen centre.
+        if elapsed < VICTORY_RISE_MS:
+            w, h = self._pacman.get_size()
+            start_x = MENU_WIDTH - w // 2 - 40
+            start_y = MENU_HEIGHT + h // 2  # just below the bottom edge
+            t = elapsed / VICTORY_RISE_MS
+            t = 1 - (1 - t) ** 3  # ease out: slows down as it arrives
+            rect = self._pacman.get_rect(center=(
+                round(start_x + (screen_cx - start_x) * t),
+                round(start_y + (screen_cy - start_y) * t)))
+            surface.blit(self._pacman, rect)
+            return
+
+        # Phase 3: hold at the final size, spot and angle (also under the
+        # dim layer).
+        zoom_elapsed = elapsed - VICTORY_RISE_MS
+        if zoom_elapsed >= VICTORY_ZOOM_MS:
+            if self._final_pacman is None:
+                self._final_pacman = pygame.transform.rotozoom(
+                    self._pacman, final_angle, self._zoom_scale)
+            image = self._final_pacman
+            center = self._final_center
+        else:
+            # Phase 2: ease from the centre into place; size, position and
+            # rotation all follow the same curve so they land together.
+            t = zoom_elapsed / VICTORY_ZOOM_MS
+            t = t * t * (3 - 2 * t)  # smoothstep
+            scale = 1 + (self._zoom_scale - 1) * t
+            image = pygame.transform.rotozoom(
+                self._pacman, final_angle * t, scale)
+            center = (
+                round(screen_cx + (self._final_center[0] - screen_cx) * t),
+                round(screen_cy + (self._final_center[1] - screen_cy) * t))
+        surface.blit(image, image.get_rect(center=center))
+
+    def handle_event(self,
+                     event: "pygame.event.Event") -> SceneResult:
+        if not self._intro_done():
+            return None  # intro is unskippable, like the jumpscare
+        return super().handle_event(event)
+
+    def draw(self, surface: "pygame.Surface") -> None:
+        if self._intro_done():
+            super().draw(surface)
+            return
+        # Intro: live game and the floating pacman only, no dim, no UI.
+        if self.graphics is not None:
+            self.graphics.draw(surface)
+        else:
+            surface.fill("black")
+        self.draw_behind_dim(surface)
+
+
+# ===== BEGIN TEMPORARY DEBUG: press V in game to open the victory screen ====
+# Delete everything from this line down to the END marker to remove it.
+_DEBUG_FAKE_SCORE = 1230  # so the name prompt shows (needs score > 0)
+_original_game_handle_event = GameScene.handle_event
+
+
+def _debug_game_handle_event(self: GameScene,
+                             event: "pygame.event.Event") -> SceneResult:
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
+        if self.game.score <= 0:
+            self.game.score = _DEBUG_FAKE_SCORE
+        return SceneState.LEVEL_COMPLETE, self._game_kwargs()
+    return _original_game_handle_event(self, event)
+
+
+GameScene.handle_event = _debug_game_handle_event  # type: ignore[method-assign]
+# ===== END TEMPORARY DEBUG ==================================================
