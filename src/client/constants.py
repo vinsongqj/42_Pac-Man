@@ -19,6 +19,10 @@ WALL_WIDTH = 4
 NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
 FIXED_FIRST_SEED = 42
 
+# Number of levels to clear before the victory screen.
+# Placeholder: to be loaded from config.json once parsing is implemented.
+MAX_LEVELS = 3
+
 UP = Vector2(0.0, -1.0)
 DOWN = Vector2(0.0, 1.0)
 LEFT = Vector2(-1.0, 0.0)
@@ -34,6 +38,14 @@ PLAYER_SPRITE_FRAMES = [
     "assets/images/sprites/pacman/pacman_3.png",
 ]
 
+# Points
+SCORE_PELLET = 10
+SCORE_POWER_PELLET = 50
+SCORE_GHOST = 200  # doubles for each ghost eaten during one power pellet
+
+# HUD: Pac-Man facing right, used as the "lives" icon
+LIFE_ICON_IMAGE = PLAYER_SPRITE_FRAMES[1]
+
 GHOST_NAMES = ["cyan", "red", "yellow", "pink"]
 GHOST_SPRITE_FRAMES = {
     name: {
@@ -44,6 +56,40 @@ GHOST_SPRITE_FRAMES = {
     }
     for name in GHOST_NAMES
 }
+
+# --- Ghost sprites for the non-default states ---------------------------
+# Adjust these paths to match your asset files. Missing files show up as
+# magenta squares in game.
+_DIRECTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
+
+
+def _same_for_all_directions(frames: list[str]) -> dict[str, list[str]]:
+    return {d: list(frames) for d in _DIRECTIONS}
+
+
+_FRIGHTENED_DIR = "assets/images/sprites/ghosts/frightened"
+_EATEN_DIR = "assets/images/sprites/ghosts/dead"
+
+# Frightened: a single blue sprite (not directional).
+GHOST_FRIGHTENED_FRAMES = _same_for_all_directions([
+    f"{_FRIGHTENED_DIR}/frightened_1.png",
+])
+# Last seconds of frightened mode: flashes blue / white to warn the player.
+GHOST_FRIGHTENED_ENDING_FRAMES = _same_for_all_directions([
+    f"{_FRIGHTENED_DIR}/frightened_1.png",
+    f"{_FRIGHTENED_DIR}/frightened_2.png",
+])
+# Eaten ghost (eyes heading home). One file per direction; if yours are not
+# directional, wrap a single path in _same_for_all_directions([...]).
+GHOST_EATEN_FRAMES = {
+    "UP": [f"{_EATEN_DIR}/up.png"],
+    "DOWN": [f"{_EATEN_DIR}/down.png"],
+    "LEFT": [f"{_EATEN_DIR}/left.png"],
+    "RIGHT": [f"{_EATEN_DIR}/right.png"],
+}
+
+# Start flashing when this many ticks of frightened mode are left.
+FRIGHTENED_WARNING_TICKS = int(2 * FPS)
 
 GHOST_FRAME_INTERVAL = 12
 PLAYER_FRAME_INTERVAL = 8

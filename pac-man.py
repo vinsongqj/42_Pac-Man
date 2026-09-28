@@ -2,7 +2,11 @@ import sys
 import pygame
 import src.client.constants as c
 from src.client.scene_utils import SceneState, SceneManager
-from src.client.scenes import MenuScene, GameScene, MENU_WIDTH, MENU_HEIGHT
+from src.client.scenes import (
+    MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
+    JumpscareScene,
+    MENU_WIDTH, MENU_HEIGHT,
+)
 
 
 def main() -> None:
@@ -13,6 +17,10 @@ def main() -> None:
     screens = {
         SceneState.MENU: MenuScene(),
         SceneState.PLAYING: GameScene(),
+        SceneState.PAUSED: PauseScene(),
+        SceneState.JUMPSCARE: JumpscareScene(),
+        SceneState.GAME_OVER: GameOverScene(),
+        SceneState.LEVEL_COMPLETE: VictoryScene(),
     }
     manager = SceneManager(screens, start=SceneState.MENU)
     screen = pygame.display.set_mode(manager.current_screen.screen_size())

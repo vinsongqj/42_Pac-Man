@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 
 from src.client.entities import Player, Ghost, Blinky, Pinky, Inky, Clyde
 import src.client.constants as c
@@ -18,6 +19,11 @@ class GameState:
         self._level: Level
         self._player: Player
         self.ghosts: list[Ghost]
+        self.score: int = 0
+        # Set when a ghost takes the last life (None for a timeout game over)
+        self.killed_by: Optional[Ghost] = None
+        self._level_start_score: int = 0
+        self._ghost_combo: int = 0
         self.eaten_dots: int = 0
         self.eaten_energizers: int = 0
         self.eaten_pellets: set[Vector2] = set()
@@ -27,6 +33,10 @@ class GameState:
     @property
     def frightened(self) -> bool:
         return self._frightened
+
+    @property
+    def frightened_ticks_left(self) -> int:
+        return self._frightened_timer
 
     @property
     def level_number(self) -> int:
@@ -46,10 +56,13 @@ class GameState:
 
     def next_level(self) -> None:
         self._level_number += 1
+        self._level_start_score = self.score
         self._reset_level()
         self.paused = True
 
     def restart_current_level(self) -> None:
+        # Restarting must not keep points earned in the abandoned attempt.
+        self.score = self._level_start_score
         self._reset_level()
 
     def _reset_level(self) -> None:
@@ -86,20 +99,30 @@ class GameState:
         self._tick_entities()
 
         for g in self.ghosts:
+            if g.is_eaten:
+                # Already eaten: harmless, and must not have its revive
+                # timer reset by touching the player again.
+                continue
             if math.dist(g.pos, self.player.pos) < 0.25:
                 if self._frightened:
                     g.is_eaten = True
-                elif not g.is_eaten:
+                    self.score += c.SCORE_GHOST * 2 ** self._ghost_combo
+                    self._ghost_combo += 1
+                else:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
                         self._gameover = True
+                        self.killed_by = g
                     else:
                         self.player.teleport_home()
 
         if self.player.cell in self.level.pellets:
             self.level.pellets.remove(self.player.cell)
+            self.score += c.SCORE_PELLET
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
+            self.score += c.SCORE_POWER_PELLET
+            self._ghost_combo = 0
             self._frightened_timer = int(c.FPS * 10)
             self._frightened = True
 

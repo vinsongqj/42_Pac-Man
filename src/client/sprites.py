@@ -168,6 +168,23 @@ class GhostSprite(Sprite):
         )
         self.name = name
         self._anim_timer = 0
+        self._frame_sets: dict[str, dict[str, list[str]]] = {
+            "normal": c.GHOST_SPRITE_FRAMES[name],
+            "frightened": c.GHOST_FRIGHTENED_FRAMES,
+            "ending": c.GHOST_FRIGHTENED_ENDING_FRAMES,
+            "eaten": c.GHOST_EATEN_FRAMES,
+        }
+        self.state = "normal"
+
+    def set_state(self, state: str) -> None:
+        """Switch between "normal", "frightened", "ending" and "eaten"."""
+        if state == self.state or state not in self._frame_sets:
+            return
+        self.state = state
+        self.frames = self._frame_sets[state]
+        self.frame_index = 0
+        self._anim_timer = 0
+        self._refresh_image()
 
     def sync(self,
              grid_pos: Vector2,

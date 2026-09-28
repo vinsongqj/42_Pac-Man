@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any, Optional, Union
 import pygame
 
 
@@ -7,10 +7,16 @@ class SceneState(Enum):
     MENU = auto()
     PLAYING = auto()
     PAUSED = auto()
+    JUMPSCARE = auto()
     GAME_OVER = auto()
     LEVEL_COMPLETE = auto()
     SETTINGS = auto()
     QUIT = auto()
+
+
+# A scene may return just the next state, or (next state, kwargs) when the
+# next scene needs data handed over (e.g. the running game and its graphics).
+SceneResult = Optional[Union[SceneState, tuple[SceneState, dict[str, Any]]]]
 
 
 class Scene:
@@ -18,10 +24,10 @@ class Scene:
         pass
 
     def handle_event(self,
-                     event: "pygame.event.Event") -> Optional[SceneState]:
+                     event: "pygame.event.Event") -> SceneResult:
         return None
 
-    def update(self) -> Optional[SceneState]:
+    def update(self) -> SceneResult:
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
@@ -47,15 +53,20 @@ class SceneManager:
         self.current_screen = self.screens[state]
         self.current_screen.on_enter(**kwargs)
 
+    def _apply(self, result: SceneResult) -> None:
+        if result is None:
+            return
+        if isinstance(result, tuple):
+            state, kwargs = result
+        else:
+            state, kwargs = result, {}
+        self.switch_to(state, **kwargs)
+
     def handle_event(self, event: "pygame.event.Event") -> None:
-        next: Optional[SceneState] = self.current_screen.handle_event(event)
-        if next is not None:
-            self.switch_to(next)
+        self._apply(self.current_screen.handle_event(event))
 
     def update(self) -> None:
-        next_state = self.current_screen.update()
-        if next_state is not None:
-            self.switch_to(next_state)
+        self._apply(self.current_screen.update())
 
     def draw(self, surface: "pygame.Surface") -> None:
         self.current_screen.draw(surface)

@@ -1,6 +1,7 @@
 import pygame
 import src.client.constants as c
 from src.client.sprites import PlayerSprite, GhostSprite
+from src.client.entities import Ghost
 from src.client.game import GameState
 
 
@@ -51,6 +52,7 @@ class Graphics:
         self.player_sprite.update()
         for i, ghost_sprite in enumerate(self.ghost_sprites):
             ghost = self.game.ghosts[i]
+            ghost_sprite.set_state(self._ghost_state(ghost))
             ghost_sprite.sync(ghost.pos, ghost.last_move)
             ghost_sprite.update()
 
@@ -65,6 +67,15 @@ class Graphics:
             self._wall_surface = surf
             self._wall_level = self.game.level
         return self._wall_surface
+
+    def _ghost_state(self, ghost: Ghost) -> str:
+        if ghost.is_eaten:
+            return "eaten"
+        if self.game.frightened:
+            if self.game.frightened_ticks_left <= c.FRIGHTENED_WARNING_TICKS:
+                return "ending"
+            return "frightened"
+        return "normal"
 
     def draw(self, screen: "pygame.Surface") -> None:
         screen.blit(self._get_wall_surface(), (0, 0))
