@@ -31,6 +31,11 @@ RIGHT = Vector2(1.0, 0.0)
 FPS = 60.0
 PLAYER_SPEED = 3.0
 GHOST_SPEED = 2.5
+# Eyes rushing back to spawn after being eaten (cells per second).
+GHOST_EATEN_SPEED = 6.0
+
+# Seconds allowed per level; the timer resets whenever a level starts.
+LEVEL_TIME_LIMIT = 90
 
 PLAYER_SPRITE_FRAMES = [
     "assets/images/sprites/pacman/pacman_1.png",

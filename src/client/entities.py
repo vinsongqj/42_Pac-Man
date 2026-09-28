@@ -64,7 +64,10 @@ class Entity(ABC):
         return Vector2(round(self.pos.x), round(self.pos.y))
 
     def at_home(self) -> bool:
-        return self.pos.distance_to(self.home) < THRESHOLD
+        # Widen the window for fast movers so a single step can never
+        # jump clean over it (eaten ghosts run at more than twice speed).
+        tolerance = max(THRESHOLD, self._speed / c.FPS)
+        return self.pos.distance_to(self.home) < tolerance
 
     def move(self) -> None:
         if self.direction.x != 0:
@@ -168,7 +171,7 @@ class Ghost(Entity, ABC):
         if value:
             self._reviving_timer = int(10 * c.FPS)
             self._is_eaten = True
-            self._speed = 3.0
+            self._speed = c.GHOST_EATEN_SPEED
         else:
             self._reviving_timer = 0
             self._is_eaten = False

@@ -27,13 +27,15 @@ MENU_HEIGHT = 1000
 
 # Fits the name column of the main menu's high score table.
 MAX_NAME_LENGTH = 7
+# A run can only be saved with a name at least this long.
+MIN_NAME_LENGTH = 3
 # Ignore keys briefly after the end screen appears, so a player still
 # mashing W/A/S/D doesn't type into the name field by accident.
 NAME_INPUT_GRACE_MS = 500
+# Distance from the name box centre down to the first menu option.
+NAME_SCREEN_OPTIONS_GAP = 150
 JUMPSCARE_MS = 500
 JUMPSCARE_SHAKE_PX = 12
-# Path to your own full-screen image, or None to use the killer ghost's
-# sprite enlarged to fill the screen.
 JUMPSCARE_IMAGE: Optional[str] = "assets/images/jumpscare.png"
 
 
@@ -160,23 +162,29 @@ class MenuScene(Scene):
 
 
 class HUD:
-    """In-game overlay: score (top left), high score (top right),
-    lives (bottom left) and controls hint (bottom right)."""
+    """In-game overlay: score (top left), level timer (top middle),
+    level number (top right), lives (bottom left) and controls hint
+    (bottom right)."""
 
     MARGIN_X = 30
     MARGIN_Y = 20
     LIFE_ICON_SIZE = 55
     LIFE_SPACING = 8
     HINT_COLOR = (150, 150, 150)
+    TIMER_WARNING_SECONDS = 10
+    TIMER_WARNING_COLOR = (255, 60, 60)
 
     def __init__(self, screen_size: tuple[int, int]) -> None:
         width, height = screen_size
         self.score_text = display.Text(
             "SCORE   0", 28, "White", (self.MARGIN_X, self.MARGIN_Y),
             anchor="topleft")
-        self.high_score_text = display.Text(
-            "HIGH SCORE   0", 28, "White",
+        self.level_text = display.Text(
+            "LEVEL   1", 28, "White",
             (width - self.MARGIN_X, self.MARGIN_Y), anchor="topright")
+        self.time_text = display.Text(
+            "0:00", 28, "White", (width // 2, self.MARGIN_Y),
+            anchor="midtop")
         self.hint_lines = [
             display.Text("MOVE:  ARROW KEYS / W A S D", 16, self.HINT_COLOR,
                          (width - self.MARGIN_X,
@@ -191,22 +199,32 @@ class HUD:
             c.LIFE_ICON_IMAGE, (size, size))
         self._lives_pos = (self.MARGIN_X, height - self.MARGIN_Y - size)
         self._score = 0
-        self._high_score = 0
+        self._level = 1
         self._lives = 0
+        self._time_left: Optional[int] = None
 
-    def update(self, score: int, high_score: int, lives: int) -> None:
+    def update(self, score: int, level: int, lives: int,
+               time_left: int) -> None:
         # Re-rendering text is comparatively slow: only do it on change.
         if score != self._score:
             self._score = score
             self.score_text.update_text(f"SCORE   {score}")
-        if high_score != self._high_score:
-            self._high_score = high_score
-            self.high_score_text.update_text(f"HIGH SCORE   {high_score}")
+        if level != self._level:
+            self._level = level
+            self.level_text.update_text(f"LEVEL   {level}")
         self._lives = lives
+        if time_left != self._time_left:
+            self._time_left = time_left
+            self.time_text.color = (self.TIMER_WARNING_COLOR
+                                    if time_left <= self.TIMER_WARNING_SECONDS
+                                    else "White")
+            minutes, seconds = divmod(time_left, 60)
+            self.time_text.update_text(f"{minutes}:{seconds:02d}")
 
     def draw(self, surface: "pygame.Surface") -> None:
         self.score_text.draw(surface)
-        self.high_score_text.draw(surface)
+        self.level_text.draw(surface)
+        self.time_text.draw(surface)
         for line in self.hint_lines:
             line.draw(surface)
         x, y = self._lives_pos
@@ -217,8 +235,6 @@ class HUD:
 
 class GameScene(Scene):
     def __init__(self) -> None:
-        # Placeholder until the DB is connected; raised live while playing.
-        self.high_score: int = SCOREBOARD.best
         self._hud: Optional[HUD] = None
 
     def on_enter(self, **kwargs: Any) -> None:
@@ -231,16 +247,15 @@ class GameScene(Scene):
         self.graphics = (existing_graphics if existing_graphics is not None
                          else Graphics(self.game))
 
-        self.high_score = max(self.high_score, SCOREBOARD.best)
         if self._hud is None:
             self._hud = HUD(self.graphics.screen_size)
         self._update_hud()
 
     def _update_hud(self) -> None:
         assert self._hud is not None
-        self.high_score = max(self.high_score, self.game.score)
-        self._hud.update(self.game.score, self.high_score,
-                         self.game.player.remaining_lives)
+        self._hud.update(self.game.score, self.game.level_number,
+                         self.game.player.remaining_lives,
+                         self.game.time_left_seconds)
 
     def screen_size(self) -> tuple[int, int]:
         return self.graphics.screen_size
@@ -365,6 +380,7 @@ class OverlayMenuScene(Scene):
         self.prompt_text: Optional[display.Text] = None
         self.name_text: Optional[display.Text] = None
         self.status_text: Optional[display.Text] = None
+        self.error_text: Optional[display.Text] = None
 
     # ----- to be customised by subclasses -----
     def info_lines(self) -> list[InfoLine]:
@@ -409,17 +425,19 @@ class OverlayMenuScene(Scene):
         self.prompt_text = None
         self.name_text = None
         self.status_text = None
+        self.error_text = None
         if self._entering_name:
             y += 30
             self.prompt_text = display.Text(
-                "ENTER YOUR NAME", 28, "White", (cx, y), anchor="center")
+                f"ENTER YOUR NAME  ({MIN_NAME_LENGTH}-{MAX_NAME_LENGTH} "
+                "CHARS)", 22, "White", (cx, y), anchor="center")
             y += 70
             self._name_box = pygame.Rect(0, 0, 360, 56)
             self._name_box.center = (cx, y)
             self.name_text = display.Text(
                 " ", 36, c.PLAYER_COLOR,
                 (self._name_box.left + 16, y), anchor="midleft")
-            y += 90
+            y += NAME_SCREEN_OPTIONS_GAP
         else:
             y = max(y + 50, 480)
 
@@ -451,14 +469,22 @@ class OverlayMenuScene(Scene):
         self._entering_name = False
         self.prompt_text = None
         self.name_text = None
+        self.error_text = None
         self.status_text = display.Text(
             message, 30, color,
             (MENU_WIDTH // 2, self._name_box.centery), anchor="center")
 
     def _submit_name(self) -> None:
         name = self._name.strip()
-        if not name or self.game is None:
-            return  # need at least one character
+        if self.game is None:
+            return
+        if len(name) < MIN_NAME_LENGTH:
+            self.error_text = display.Text(
+                f"NAME MUST BE AT LEAST {MIN_NAME_LENGTH} CHARS",
+                15, (255, 60, 60),
+                (MENU_WIDTH // 2, self._name_box.bottom + 24),
+                anchor="center")
+            return
         SCOREBOARD.submit(name, self.game.score)
         self._finish_name_entry("SCORE SUBMITTED", c.PLAYER_COLOR)
 
@@ -472,14 +498,16 @@ class OverlayMenuScene(Scene):
         elif event.key == pygame.K_BACKSPACE:
             if self._name and self.name_text is not None:
                 self._name = self._name[:-1]
+                self.error_text = None
                 self.name_text.update_text(self._name or " ")
         else:
-            ch = event.unicode.upper()
+            ch = event.unicode
             if (len(ch) == 1 and ch.isascii()
                     and (ch.isalnum() or ch in "_-")
                     and len(self._name) < MAX_NAME_LENGTH
                     and self.name_text is not None):
                 self._name += ch
+                self.error_text = None
                 self.name_text.update_text(self._name)
 
     # ----- scene interface -----
@@ -528,6 +556,8 @@ class OverlayMenuScene(Scene):
         for text in self._info_texts:
             text.draw(surface)
         self._draw_name_field(surface)
+        if self.error_text is not None:
+            self.error_text.draw(surface)
         if self.status_text is not None:
             self.status_text.draw(surface)
         for i, (normal, highlighted) in enumerate(self._items):

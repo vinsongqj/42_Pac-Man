@@ -47,6 +47,16 @@ class GameState:
         return self._ticks
 
     @property
+    def time_limit_ticks(self) -> int:
+        return int(c.LEVEL_TIME_LIMIT * c.FPS)
+
+    @property
+    def time_left_seconds(self) -> int:
+        """Whole seconds left on this level (rounded up), for the HUD."""
+        left = max(0, self.time_limit_ticks - self._ticks)
+        return math.ceil(left / c.FPS)
+
+    @property
     def gameover(self) -> bool:
         return self._gameover
 
@@ -90,7 +100,7 @@ class GameState:
             self._frightened = False
 
         self._ticks += 1
-        if (self.ticks % int(90 * c.FPS) == 0):
+        if self._ticks >= self.time_limit_ticks:
             self._gameover = True
 
         if len(self.level.pellets) == 0:
