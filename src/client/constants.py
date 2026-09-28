@@ -1,4 +1,4 @@
-from .vector2 import Vector2
+from src.client.vector2 import Vector2
 
 CELL = 40
 MARGIN = 30

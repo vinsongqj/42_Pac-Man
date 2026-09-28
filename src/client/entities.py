@@ -1,6 +1,5 @@
 from typing import Optional
 from abc import ABC, abstractmethod
-from collections import deque
 import random
 
 from src.client.vector2 import Vector2
@@ -29,7 +28,8 @@ class Entity(ABC):
     def pos(self, new_pos: 'Vector2') -> None:
         if isinstance(new_pos, Vector2):
             self._pos = new_pos
-        else: raise TypeError
+        else:
+            raise TypeError
 
     @property
     def home(self) -> Vector2:
@@ -43,7 +43,8 @@ class Entity(ABC):
     def last_move(self, value):
         if isinstance(value, Vector2):
             self._last_move = value
-        else: raise TypeError
+        else:
+            raise TypeError
 
     @property
     def direction(self):
@@ -53,7 +54,8 @@ class Entity(ABC):
     def direction(self, value: Vector2):
         if isinstance(value, Vector2):
             self._direction = value
-        else: raise TypeError
+        else:
+            raise TypeError
 
     @property
     def cell(self) -> Vector2:
@@ -121,7 +123,8 @@ class Player(Entity):
                 new_cell = cell
 
             if (not self.pending_direction.is_zero and
-                    level.can_move(self.pos, self.pos + self.pending_direction)):
+                    level.can_move(self.pos,
+                                   self.pos + self.pending_direction)):
                 self.direction = self.pending_direction
 
             if (not self.direction.is_zero and
@@ -169,11 +172,14 @@ class Ghost(Entity, ABC):
 
     def _get_directions(self, level) -> list[Vector2]:
         d = [c.UP, c.DOWN, c.RIGHT, c.LEFT]
-        if not self.is_eaten and not self.direction.is_zero: d.remove(-self.direction)
+        if not self.is_eaten and not self.direction.is_zero:
+            d.remove(-self.direction)
         d = [d1 for d1 in d if (
             level.can_move(self.pos, self.pos + d1))]
-        if d: return d
-        else: return [-self.direction]
+        if d:
+            return d
+        else:
+            return [-self.direction]
 
     def tick(self, game):
         if self.is_eaten:
@@ -184,7 +190,7 @@ class Ghost(Entity, ABC):
                 self._pos = self._pos.round()
                 self.direction = Vector2(0, 0)
                 return
-            
+
         dirs = self._get_directions(game.level)
 
         if self._is_aligned():
@@ -207,7 +213,7 @@ class Ghost(Entity, ABC):
                             best_direction = d
 
                 self.direction = best_direction
-    
+
         if (game.level.can_move(self.pos, self.pos + self.direction * 0.5)):
             self.move()
 
@@ -217,11 +223,15 @@ class Blinky(Ghost):
         super().__init__('red', pos, speed)
 
     def _get_target_pos(self, game) -> Vector2:
-        if self.is_eaten: target = self.home
-        else: target = game.player.pos
+        if self.is_eaten:
+            target = self.home
+        else:
+            target = game.player.pos
         path = game.level.bfs(self.pos, target)
-        if path: return path.popleft()
-        else: return game.player.pos
+        if path:
+            return path.popleft()
+        else:
+            return game.player.pos
 
 
 class Pinky(Ghost):
@@ -230,24 +240,33 @@ class Pinky(Ghost):
 
     def _get_target_pos(self, game) -> Vector2:
         player = game.player
-        if self.is_eaten: target = self.home
-        else: target = player.pos + player.direction * 4
+        if self.is_eaten:
+            target = self.home
+        else:
+            target = player.pos + player.direction * 4
         path = game.level.bfs(self.pos, target)
-        if path: return path.popleft()
-        else: return target
+        if path:
+            return path.popleft()
+        else:
+            return target
 
 
 class Inky(Ghost):
     def __init__(self, pos: Vector2, speed: float) -> None:
         super().__init__('cyan', pos, speed)
-    
+
     def _get_target_pos(self, game) -> Vector2:
         player = game.player
-        if self.is_eaten: target = self.home
-        else: target = 2 * game.ghosts[0].pos - (player.pos + player.direction * 2)
+        if self.is_eaten:
+            target = self.home
+        else:
+            target = 2 * game.ghosts[0].pos - (player.pos +
+                                               player.direction * 2)
         path = game.level.bfs(self.pos, target)
-        if path: return path.popleft()
-        else: return target
+        if path:
+            return path.popleft()
+        else:
+            return target
 
 
 class Clyde(Ghost):
@@ -260,5 +279,7 @@ class Clyde(Ghost):
         else:
             target = self.home
         path = game.level.bfs(self.pos, target)
-        if path: return path.popleft()
-        else: return target
+        if path:
+            return path.popleft()
+        else:
+            return target

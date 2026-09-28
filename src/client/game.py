@@ -1,7 +1,7 @@
 from src.client.entities import Player, Ghost, Blinky, Pinky, Inky, Clyde
 import src.client.constants as c
-from .level import Level, LevelGenerator
-from .vector2 import Vector2
+from src.client.level import Level, LevelGenerator
+from src.client.vector2 import Vector2
 
 import math
 
@@ -58,14 +58,16 @@ class GameState:
         self.ghosts = [
             Blinky(Vector2(0, 0), ghost_speed),
             Pinky(Vector2(self.level.width - 1, 0), ghost_speed),
-            Inky(Vector2(self.level.width - 1, self.level.height - 1), ghost_speed),
+            Inky(Vector2(self.level.width - 1, self.level.height - 1),
+                 ghost_speed),
             Clyde(Vector2(0, self.level.height - 1), ghost_speed)
         ]
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()
 
     def tick(self) -> None:
-        if (self.paused or self._gameover): return
+        if (self.paused or self._gameover):
+            return
 
         if self._frightened_timer > 0:
             self._frightened_timer -= 1
@@ -73,13 +75,14 @@ class GameState:
             self._frightened = False
 
         self._ticks += 1
-        if (self.ticks % (90 * c.FPS) == 0): self._gameover = True
+        if (self.ticks % (90 * c.FPS) == 0):
+            self._gameover = True
 
         if len(self.level.pellets) == 0:
             self.next_level()
 
         self._tick_entities()
-        
+
         for g in self.ghosts:
             if math.dist(g.pos, self.player.pos) < 0.25:
                 if self._frightened:
@@ -97,7 +100,7 @@ class GameState:
             self.level.power_pellets.remove(self.player.cell)
             self._frightened_timer = c.FPS * 10
             self._frightened = True
-                
+
     def _tick_entities(self) -> None:
         self.player.tick(self.level)
         for ghost in self.ghosts:

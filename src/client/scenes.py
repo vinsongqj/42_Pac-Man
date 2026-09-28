@@ -1,7 +1,7 @@
 from typing import Optional, Any
 import pygame
 
-from .vector2 import Vector2
+from src.client.vector2 import Vector2
 import src.client.constants as c
 import src.client.display as display
 from src.client.game import GameState

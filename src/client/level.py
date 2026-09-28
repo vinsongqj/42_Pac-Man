@@ -1,6 +1,6 @@
 from collections import deque
 
-from .constants import UP, DOWN, LEFT, RIGHT
+from src.client.constants import UP, DOWN, LEFT, RIGHT
 from mazegenerator import MazeGenerator  # type: ignore[import-not-found]
 from src.client.vector2 import Vector2
 
@@ -11,7 +11,8 @@ class LevelGenerator:
         self._generator = MazeGenerator(size=size, perfect=False, seed=42)
 
     def generate(self, seed: int = 42) -> 'Level':
-        self._generator = MazeGenerator(size=self._size, perfect=False, seed=seed)
+        self._generator = MazeGenerator(size=self._size, perfect=False,
+                                        seed=seed)
         self._generator.generate(seed)
         return Level(self._generator.maze)
 
@@ -26,7 +27,7 @@ class Level:
         self._power_pellets: set[Vector2] = set()
         self._ghost_starts: list[Vector2] = []
         self._player_start = self._nearest_walkable(Vector2(self.width // 2,
-                                                          self.height // 2))
+                                                            self.height // 2))
         self._layout()
 
     @property
@@ -76,13 +77,15 @@ class Level:
                         flag = False
                         break
                     queue.append(n)
-        if not queue and flag: return None
+        if not queue and flag:
+            return None
         cell = b
         path = [cell]
         while cell != a:
             if cell in came_from:
                 cell = came_from[cell]
-                if cell == a: break
+                if cell == a:
+                    break
                 path.append(cell)
         path.reverse()
         return deque(path)
@@ -90,7 +93,8 @@ class Level:
     def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
         result = []
         for d in [DOWN, LEFT, RIGHT, UP]:
-            if self.can_move(a, a + d): result.append(a + d)
+            if self.can_move(a, a + d):
+                result.append(a + d)
         return result
 
     def _is_walkable(self, point: Vector2) -> bool:
@@ -113,7 +117,8 @@ class Level:
             x, y = queue.popleft()
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                 nx, ny = x + dx, y + dy
-                if (nx, ny) in seen or not (0 <= nx < self.width and 0 <= ny < self.height):
+                if (nx, ny) in seen or not (0 <= nx < self.width and
+                                            0 <= ny < self.height):
                     continue
                 candidate = Vector2(nx, ny)
                 if self._is_walkable(candidate):
@@ -157,12 +162,12 @@ class Level:
         delta_x = a_x - b_x
         delta_y = a_y - b_y
 
-        if delta_x < 0: #RIGHT
+        if delta_x < 0:  # RIGHT
             return not self._maze[a_y][a_x] & 2
-        elif delta_x > 0: #LEFT
+        elif delta_x > 0:  # LEFT
             return not self._maze[a_y][a_x] & 8
-        elif delta_y < 0: #DOWN
+        elif delta_y < 0:  # DOWN
             return not self._maze[a_y][a_x] & 4
-        elif delta_y > 0: #UP
+        elif delta_y > 0:  # UP
             return not self._maze[a_y][a_x] & 1
         return True

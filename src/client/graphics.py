@@ -39,7 +39,8 @@ class Graphics:
             self.ghost_sprites[index].set_direction(direction)
 
     def update(self) -> None:
-        self.player_sprite.sync(self.game.player.pos, self.game.player.last_move)
+        self.player_sprite.sync(self.game.player.pos,
+                                self.game.player.last_move)
         self.player_sprite.update()
         for i, ghost_sprite in enumerate(self.ghost_sprites):
             ghost = self.game.ghosts[i]

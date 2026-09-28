@@ -1,7 +1,7 @@
 from typing import Optional, Union, cast
 import pygame
 
-from .vector2 import Vector2
+from src.client.vector2 import Vector2
 import src.client.constants as c
 from src.client.display import Image
 
