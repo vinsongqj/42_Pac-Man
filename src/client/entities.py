@@ -196,7 +196,7 @@ class Ghost(Entity, ABC):
 
                 if not dirs:
                     best_direction = Vector2(0, 0)
-                elif game.frightened:
+                elif game.frightened and not self.is_eaten:
                     best_direction = random.choice(dirs)
                 else:
                     for d in dirs:
