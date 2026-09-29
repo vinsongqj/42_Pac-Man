@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "YXqGpq7d6kw=",
+  "dgSpecHash": "D0GpKn1qIbc=",
   "success": true,
   "projectFilePath": "/home/alexhysel/Projects/42_Pac-Man/src/server/Pacman.Server.Core/Pacman.Server.Core.csproj",
   "expectedPackageFiles": [
@@ -19,7 +19,7 @@
     "/home/alexhysel/.nuget/packages/microsoft.extensions.primitives/10.0.12/microsoft.extensions.primitives.10.0.12.nupkg.sha512",
     "/home/alexhysel/.nuget/packages/npgsql/10.0.3/npgsql.10.0.3.nupkg.sha512",
     "/home/alexhysel/.nuget/packages/npgsql.entityframeworkcore.postgresql/10.0.3/npgsql.entityframeworkcore.postgresql.10.0.3.nupkg.sha512",
-    "/home/alexhysel/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.11/microsoft.aspnetcore.app.ref.10.0.11.nupkg.sha512"
+    "/home/alexhysel/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.12/microsoft.aspnetcore.app.ref.10.0.12.nupkg.sha512"
   ],
   "logs": []
 }
