@@ -26,19 +26,12 @@ from typing import Any, Optional
 
 # Use the https address printed by `dotnet run` (see launchSettings.json).
 # Override with:  set PACMAN_API_URL=https://localhost:7123
-BASE_URL = "http://localhost:5168"
+BASE_URL = "http://localhost:5168/"
 LEADERBOARD_SIZE = 10
 TIMEOUT_SECONDS = 3.0
 
 # Shown until the first successful fetch (or when the server is offline).
 PLACEHOLDER_SCORES: list[dict[str, Any]] = [
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
     {"name": "", "bestScore": 0},
     {"name": "", "bestScore": 0},
     {"name": "", "bestScore": 0},
