@@ -18,23 +18,26 @@ freezes. If the server is down, the last known data is kept.
 import json
 import os
 import ssl
+import sys
 import threading
 import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any, Optional
 
-# Use the https address printed by `dotnet run` (see launchSettings.json).
-# Override with:  set PACMAN_API_URL=https://localhost:7123
-BASE_URL = "http://localhost:5168/"
+# Deployed API on Render. To test against a local server instead, set e.g.
+#   PACMAN_API_URL=http://localhost:5168
+BASE_URL = os.environ.get(
+    "PACMAN_API_URL", "https://pac-man-72i3.onrender.com").rstrip("/")
 LEADERBOARD_SIZE = 10
-TIMEOUT_SECONDS = 3.0
+# Render's free tier sleeps when idle; the first request can take ~1 minute.
+TIMEOUT_SECONDS = 60.0
 
 # Shown until the first successful fetch (or when the server is offline).
 PLACEHOLDER_SCORES: list[dict[str, Any]] = [
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
-    {"name": "", "bestScore": 0},
+    {"name": "Alex", "bestScore": 1000},
+    {"name": "Bob", "bestScore": 1000},
+    {"name": "Chrissy", "bestScore": 1000},
 ]
 
 
@@ -48,6 +51,10 @@ def _ssl_context() -> Optional[ssl.SSLContext]:
         ctx.verify_mode = ssl.CERT_NONE
         return ctx
     return None
+
+
+def _log(msg: str) -> None:
+    print(f"[scores] {msg}", file=sys.stderr, flush=True)
 
 
 def _request(method: str, path: str, params: dict[str, Any]) -> Any:
@@ -83,7 +90,9 @@ class ScoreBoard:
     def submit(self, name: str, score: int) -> None:
         # Mirror the server's validation so we don't send doomed requests.
         if len(name) < 3 or score < 0:
+            _log(f"not sending invalid entry: {name!r}, {score}")
             return
+        _log(f"sending {name!r}, {score} to {BASE_URL}")
         threading.Thread(target=self._send, args=(name, score),
                          daemon=True).start()
 
@@ -91,7 +100,12 @@ class ScoreBoard:
         try:
             data = _request("GET", "/leaderboard",
                             {"size": LEADERBOARD_SIZE})
-        except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+        except urllib.error.HTTPError as e:
+            _log(f"GET /leaderboard -> HTTP {e.code}: {e.read()[:300]!r}")
+            self.online = False
+            return
+        except (urllib.error.URLError, TimeoutError, ValueError, OSError) as e:
+            _log(f"GET /leaderboard failed: {e!r}")
             self.online = False
             return
         entries = [
@@ -106,9 +120,15 @@ class ScoreBoard:
     def _send(self, name: str, score: int) -> None:
         try:
             _request("PUT", "/user", {"name": name, "newScore": score})
-        except (urllib.error.URLError, TimeoutError, OSError):
+        except urllib.error.HTTPError as e:
+            _log(f"PUT /user -> HTTP {e.code}: {e.read()[:300]!r}")
             self.online = False
             return
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            _log(f"PUT /user failed: {e!r}")
+            self.online = False
+            return
+        _log(f"saved {name!r} with score {score}")
         self._fetch()  # show the updated leaderboard
 
 
