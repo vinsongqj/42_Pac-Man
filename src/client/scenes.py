@@ -262,20 +262,20 @@ class HUD:
     def __init__(self, screen_size: tuple[int, int]) -> None:
         width, height = screen_size
         self.score_text = display.Text(
-            "SCORE   0", 28, "White", (self.MARGIN_X, self.MARGIN_Y),
+            "SCORE   0", 40, "White", (self.MARGIN_X, self.MARGIN_Y),
             anchor="topleft")
         self.level_text = display.Text(
-            "LEVEL   1", 28, "White",
+            "LEVEL   1", 40, "White",
             (width - self.MARGIN_X, self.MARGIN_Y), anchor="topright")
         self.time_text = display.Text(
-            "0:00", 28, "White", (width // 2, self.MARGIN_Y),
+            "0:00", 40, "White", (width // 2, self.MARGIN_Y),
             anchor="midtop")
         self.hint_lines = [
-            display.Text("MOVE:  ARROW KEYS / W A S D", 16, self.HINT_COLOR,
+            display.Text("MOVE:  ARROW KEYS / W A S D", 22, self.HINT_COLOR,
                          (width - self.MARGIN_X,
                           height - self.MARGIN_Y - 28),
                          anchor="bottomright"),
-            display.Text("PAUSE:  ESC", 16, self.HINT_COLOR,
+            display.Text("PAUSE:  ESC", 22, self.HINT_COLOR,
                          (width - self.MARGIN_X, height - self.MARGIN_Y),
                          anchor="bottomright"),
         ]

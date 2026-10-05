@@ -8,7 +8,7 @@ from src.client.vector2 import Vector2
 
 
 class GameState:
-    def __init__(self, size: tuple[int, int] = (18, 18)) -> None:
+    def __init__(self, size: tuple[int, int] = c.MAZE_SIZE) -> None:
         self._ticks: int = 0
         self.paused: bool = False
         self._gameover = False
@@ -77,7 +77,7 @@ class GameState:
 
     def _reset_level(self) -> None:
         self._ticks = 0
-        self.level = self.generator.generate(42)
+        self.level = self.generator.generate(c.FIXED_FIRST_SEED + self._level_number - 1)
         self._player = Player(self.level.player_start)
         ghost_speed = c.GHOST_SPEED
         self.ghosts = [
