@@ -11,7 +11,7 @@ from src.client.scenes import (
 
 def main() -> None:
     pygame.init()
-    pygame.display.set_mode((MENU_WIDTH, MENU_HEIGHT))
+    pygame.display.set_mode((MENU_WIDTH, MENU_HEIGHT), pygame.RESIZABLE | pygame.SCALED)
     pygame.display.set_caption("42 Pac-Man")
 
     screens = {
@@ -23,7 +23,8 @@ def main() -> None:
         SceneState.LEVEL_COMPLETE: VictoryScene(),
     }
     manager = SceneManager(screens, start=SceneState.MENU)
-    screen = pygame.display.set_mode(manager.current_screen.screen_size())
+    screen = pygame.display.set_mode(manager.current_screen.screen_size(),
+                                     pygame.RESIZABLE | pygame.SCALED)
     clock = pygame.time.Clock()
 
     running = True
@@ -47,7 +48,7 @@ def main() -> None:
 
         desired_size = manager.current_screen.screen_size()
         if screen.get_size() != desired_size:
-            screen = pygame.display.set_mode(desired_size)
+            screen = pygame.display.set_mode(desired_size, pygame.RESIZABLE | pygame.SCALED)
 
         manager.draw(screen)
         pygame.display.flip()
