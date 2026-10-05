@@ -1,9 +1,8 @@
 from typing import Optional, Any, Callable
 import pygame
 import random
-
-from src.client.vector2 import Vector2
 import src.client.constants as c
+from src.client.vector2 import Vector2
 import src.client.display as display
 from src.client.game import GameState
 from src.client.graphics import Graphics
@@ -327,7 +326,7 @@ class GameScene(Scene):
         self._caption_level: Optional[int] = None
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
-                     else GameState(size=(21, 21)))
+                     else GameState(size=c.MAZE_SIZE))
 
         existing_graphics: Optional[Graphics] = kwargs.get("graphics")
         self.graphics = (existing_graphics if existing_graphics is not None

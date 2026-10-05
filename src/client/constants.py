@@ -2,7 +2,7 @@ from src.client.vector2 import Vector2
 
 CELL = 40
 MARGIN = 30
-
+MAZE_SIZE = (17, 17)
 BG_COLOR = (0, 0, 0)
 WALL_COLOR = (33, 33, 222)
 DOT_COLOR = (255, 184, 174)

@@ -8,7 +8,7 @@ from src.client.vector2 import Vector2
 
 
 class GameState:
-    def __init__(self, size: tuple[int, int] = (21, 21)) -> None:
+    def __init__(self, size: tuple[int, int] = (18, 18)) -> None:
         self._ticks: int = 0
         self.paused: bool = False
         self._gameover = False
