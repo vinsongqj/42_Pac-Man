@@ -8,9 +8,11 @@ from src.client.vector2 import Vector2
 
 
 class GameState:
-    def __init__(self, size: tuple[int, int] = c.MAZE_SIZE, allow_cheats = True) -> None:
+    def __init__(self, size: tuple[int, int] = c.MAZE_SIZE,
+                 allow_cheats: bool = False) -> None:
         self._allow_cheats = allow_cheats
         self._ghosts_freezed = False
+        self._time_frozen = False
         self._player_invincible = False
         self._ticks: int = 0
         self.paused: bool = False
@@ -50,6 +52,18 @@ class GameState:
     def add_player_life(self):
         if self._allow_cheats:
             self.player.increase_remaining_lives()
+
+    @property
+    def time_frozen(self) -> bool:
+        return self._time_frozen
+
+    def freeze_time(self) -> None:
+        if self._allow_cheats:
+            self._time_frozen = True
+
+    def unfreeze_time(self) -> None:
+        if self._allow_cheats:
+            self._time_frozen = False
 
     @property
     def ghosts_freezed(self):
@@ -99,7 +113,12 @@ class GameState:
         self._reset_level()
         self.paused = True
 
+    def advance_level(self) -> None:
+        """Normal progression after clearing a level (not a cheat)."""
+        self._next_level()
+
     def next_level(self) -> None:
+        """Cheat: skip to the next level."""
         if self._allow_cheats:
             self._next_level()
 
@@ -132,9 +151,10 @@ class GameState:
         else:
             self._frightened = False
 
-        self._ticks += 1
-        if self._ticks >= self.time_limit_ticks:
-            self._gameover = True
+        if not self._time_frozen:
+            self._ticks += 1
+            if self._ticks >= self.time_limit_ticks:
+                self._gameover = True
 
         if len(self.level.pellets) == 0:
             self._next_level()

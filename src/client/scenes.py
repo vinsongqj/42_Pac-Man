@@ -326,7 +326,8 @@ class GameScene(Scene):
         self._caption_level: Optional[int] = None
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
-                     else GameState(size=c.MAZE_SIZE))
+                     else GameState(size=c.MAZE_SIZE,
+                                   allow_cheats=c.CHEATS_ENABLED))
 
         existing_graphics: Optional[Graphics] = kwargs.get("graphics")
         self.graphics = (existing_graphics if existing_graphics is not None
@@ -366,6 +367,11 @@ class GameScene(Scene):
                     self.game.ghosts_unfreeze()
                 else:
                     self.game.ghosts_freeze()
+            elif event.key == pygame.K_p and self.game.allow_cheats:
+                if self.game.time_frozen:
+                    self.game.unfreeze_time()
+                else:
+                    self.game.freeze_time()
             elif event.key == pygame.K_r:
                 self.game.restart_current_level()
                 self.graphics.on_new_level()
@@ -395,7 +401,7 @@ class GameScene(Scene):
         if not self.game.level.pellets:
             if self.game.level_number >= c.MAX_LEVELS:
                 return SceneState.LEVEL_COMPLETE, self._game_kwargs()
-            self.game.next_level()
+            self.game.advance_level()
             self.graphics.on_new_level()
         return None
 

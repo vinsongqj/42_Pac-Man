@@ -25,6 +25,8 @@ import urllib.parse
 import urllib.request
 from typing import Any, Optional
 
+import src.client.constants as c
+
 # Deployed API on Render. To test against a local server instead, set e.g.
 #   PACMAN_API_URL=http://localhost:5168
 BASE_URL = os.environ.get(
@@ -88,6 +90,11 @@ class ScoreBoard:
         threading.Thread(target=self._fetch, daemon=True).start()
 
     def submit(self, name: str, score: int) -> None:
+        # Cheat mode (config.json) is for testing: those runs must never
+        # reach the database.
+        if c.CHEATS_ENABLED:
+            _log("cheat mode is on: score not submitted")
+            return
         # Mirror the server's validation so we don't send doomed requests.
         if len(name) < 3 or score < 0:
             _log(f"not sending invalid entry: {name!r}, {score}")

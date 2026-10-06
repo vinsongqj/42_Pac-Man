@@ -1,9 +1,5 @@
 from src.client.vector2 import Vector2
 
-MARGIN = 30
-MAZE_SIZE = (15, 15)
-MAZE_PIXELS = 810
-CELL = MAZE_PIXELS // max(MAZE_SIZE)
 BG_COLOR = (0, 0, 0)
 WALL_COLOR = (33, 33, 222)
 DOT_COLOR = (255, 184, 174)
@@ -11,18 +7,37 @@ POWER_COLOR = (255, 255, 255)
 PLAYER_COLOR = (255, 255, 0)
 GHOST_COLORS = [(255, 0, 0), (255, 184, 255), (0, 255, 255), (255, 184, 82)]
 
+
+NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
+
+
+# ---------------------------------------------------------------------
+# Defaults. config.json overrides these at start-up (config.Config.apply).
+# ---------------------------------------------------------------------
+MAX_LEVELS = 3                       # levels to clear before the victory
+PLAYER_LIVES = 3
+CHEATS_ENABLED = False               # cheat mode (config.json: "cheats")
+FIXED_FIRST_SEED = 42                # seed of level 1 (later levels are random)
+LEVEL_TIME_LIMIT = 90                # seconds per level
+
+SCORE_PELLET = 10
+SCORE_POWER_PELLET = 50
+SCORE_GHOST = 200  # doubles for each ghost eaten during one power pellet
+
+# ---------------------------------------------------------------------
+# Layout. The maze size is fixed; the cell size is derived from it so the
+# maze always takes up about MAZE_PIXELS on screen.
+# ---------------------------------------------------------------------
+MAZE_SIZE = (15, 15)   # (width, height) in cells
+MAZE_PIXELS = 840      # what the old 21x21 maze took up at CELL = 40
+MARGIN = 30
+
+CELL = MAZE_PIXELS // max(MAZE_SIZE)
 DOT_RADIUS = max(2, CELL // 13)
 POWER_RADIUS = max(4, CELL // 5)
 PLAYER_RADIUS = CELL // 2 - 3
 GHOST_RADIUS = CELL // 2 - 4
-WALL_WIDTH = max(4, CELL // 10)
-
-NORTH, EAST, SOUTH, WEST = 1, 2, 4, 8
-FIXED_FIRST_SEED = 42
-
-# Number of levels to clear before the victory screen.
-# Placeholder: to be loaded from config.json once parsing is implemented.
-MAX_LEVELS = 3
+WALL_WIDTH = max(3, CELL // 10)
 
 UP = Vector2(0.0, -1.0)
 DOWN = Vector2(0.0, 1.0)
@@ -35,8 +50,6 @@ GHOST_SPEED = 2.5
 # Eyes rushing back to spawn after being eaten (cells per second).
 GHOST_EATEN_SPEED = 6.0
 
-# Seconds allowed per level; the timer resets whenever a level starts.
-LEVEL_TIME_LIMIT = 90
 
 PLAYER_SPRITE_FRAMES = [
     "assets/images/sprites/pacman/pacman_1.png",
@@ -44,10 +57,6 @@ PLAYER_SPRITE_FRAMES = [
     "assets/images/sprites/pacman/pacman_3.png",
 ]
 
-# Points
-SCORE_PELLET = 10
-SCORE_POWER_PELLET = 50
-SCORE_GHOST = 200  # doubles for each ghost eaten during one power pellet
 
 # HUD: Pac-Man facing right, used as the "lives" icon
 LIFE_ICON_IMAGE = PLAYER_SPRITE_FRAMES[1]
