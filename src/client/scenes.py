@@ -92,66 +92,8 @@ class MenuScene(Scene):
             anchor="center",
         )
 
-        score_data: list[dict[str, Any]] = SCOREBOARD.entries
-
-        start_y = 350
-        line_height = 38
-        max_name_length = 7
-
-        rank_x = rect.centerx - 110   # Column 1: Rank (Right aligned)
-        name_x = rect.centerx - 60   # Column 2: Player Name (Left aligned)
-        score_x = rect.centerx + 120  # Column 3: High Score (Right aligned)
-
-        self.scores_text: list[tuple[display.Text, display.Text,
-                                     display.Text]] = []
-
-        for idx, entry in enumerate(score_data[:10]):
-            row_y = start_y + (idx * line_height)
-
-            raw_name: str = str(entry["name"]) if entry["name"] else "-"
-            if len(raw_name) > max_name_length:
-                formatted_name = f"{raw_name[:max_name_length]}..."
-            else:
-                formatted_name = raw_name
-
-            # Column 1: Rank Number
-            rank_text = display.Text(
-                text=f"{idx + 1}",
-                font_size=24,
-                color="White",
-                pos=(rank_x, row_y - 2),
-                anchor="topright",
-            )
-
-            # Column 2: Player Name
-            name_text = display.Text(
-                text=formatted_name,
-                font_size=20,
-                color="White",
-                pos=(name_x, row_y),
-                anchor="topleft",
-            )
-
-            # Column 3: Best Score
-            score_text = display.Text(
-                text=str(entry["bestScore"]),
-                font_size=20,
-                color="White",
-                pos=(score_x, row_y),
-                anchor="topright",
-            )
-
-            self.scores_text.append((rank_text, name_text, score_text))
-
-        self.no_scores_text: Optional[display.Text] = None
-        if not score_data:
-            self.no_scores_text = display.Text(
-                text="NO SCORES YET",
-                font_size=28,
-                color=(150, 150, 150),
-                pos=(rect.centerx, start_y + 60),
-                anchor="center",
-            )
+        SCOREBOARD.refresh()
+        self._build_scores()
 
         self.pacman = display.Image(
             image_path=c.MAIN_MENU_PACMAN_IMAGE,
@@ -185,6 +127,71 @@ class MenuScene(Scene):
         self._quit_hint_text = display.Text(
             "ENTER TO SELECT   ESC TO CANCEL", 20, HINT_COLOR,
             (rect.centerx, opt_y + 30), anchor="center")
+
+    def _build_scores(self) -> None:
+        """(Re)build the leaderboard texts from SCOREBOARD. Called on enter
+        and again whenever the scoreboard changes (e.g. the server answers
+        after the menu is already on screen)."""
+        rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
+        self._scores_version = SCOREBOARD.version
+        score_data: list[dict[str, Any]] = SCOREBOARD.entries
+
+        start_y = 350
+        line_height = 38
+        max_name_length = 7
+
+        rank_x = rect.centerx - 110   # Column 1: Rank (Right aligned)
+        name_x = rect.centerx - 60   # Column 2: Player Name (Left aligned)
+        score_x = rect.centerx + 120  # Column 3: High Score (Right aligned)
+
+        self.scores_text: list[tuple[display.Text, display.Text,
+                                     display.Text]] = []
+
+        for idx, entry in enumerate(score_data[:10]):
+            row_y = start_y + (idx * line_height)
+
+            raw_name: str = str(entry["name"]) if entry["name"] else "-"
+            if len(raw_name) > max_name_length:
+                formatted_name = f"{raw_name[:max_name_length]}..."
+            else:
+                formatted_name = raw_name
+
+            rank_text = display.Text(
+                text=f"{idx + 1}",
+                font_size=24,
+                color="White",
+                pos=(rank_x, row_y - 2),
+                anchor="topright",
+            )
+            name_text = display.Text(
+                text=formatted_name,
+                font_size=20,
+                color="White",
+                pos=(name_x, row_y),
+                anchor="topleft",
+            )
+            score_text = display.Text(
+                text=str(entry["bestScore"]),
+                font_size=20,
+                color="White",
+                pos=(score_x, row_y),
+                anchor="topright",
+            )
+            self.scores_text.append((rank_text, name_text, score_text))
+
+        self.no_scores_text: Optional[display.Text] = None
+        if not score_data:
+            message = {
+                "loading": "LOADING SCORES...",
+                "offline": "SCORES UNAVAILABLE",
+            }.get(SCOREBOARD.status, "NO SCORES YET")
+            self.no_scores_text = display.Text(
+                text=message,
+                font_size=28,
+                color=(150, 150, 150),
+                pos=(rect.centerx, start_y + 60),
+                anchor="center",
+            )
 
     def screen_size(self) -> tuple[int, int]:
         return MENU_WIDTH, MENU_HEIGHT
@@ -220,6 +227,8 @@ class MenuScene(Scene):
 
     def update(self) -> None:
         self.subtitle_text.fade()
+        if self._scores_version != SCOREBOARD.version:
+            self._build_scores()
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
@@ -327,7 +336,7 @@ class GameScene(Scene):
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
                      else GameState(size=c.MAZE_SIZE,
-                                   allow_cheats=c.CHEATS_ENABLED))
+                                    allow_cheats=c.CHEATS_ENABLED))
 
         existing_graphics: Optional[Graphics] = kwargs.get("graphics")
         self.graphics = (existing_graphics if existing_graphics is not None
@@ -757,12 +766,15 @@ class ScoreScreen(OverlayMenuScene):
             (self.headline(), "White"),
             (f"Score:  {score}", "White"),
         ]
-        if score > best:
+        if c.CHEATS_ENABLED:
+            lines.append(("CHEAT MODE - SCORE NOT SAVED", (255, 60, 60)))
+        elif score > best:
             lines.append(("NEW HIGH SCORE!", c.PLAYER_COLOR))
         return lines
 
     def wants_name_entry(self) -> bool:
-        return self._final_score() > 0
+        # Cheat runs are never saved, so don't ask for a name.
+        return self._final_score() > 0 and not c.CHEATS_ENABLED
 
     def options(self) -> list[MenuOption]:
         return [
@@ -918,5 +930,5 @@ def _debug_game_handle_event(self: GameScene,
     return _original_game_handle_event(self, event)
 
 
-GameScene.handle_event = _debug_game_handle_event  # type: ignore[method-assign]
+GameScene.handle_event = _debug_game_handle_event
 # ===== END TEMPORARY DEBUG ==================================================

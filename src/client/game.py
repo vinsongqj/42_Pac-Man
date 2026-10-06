@@ -34,6 +34,7 @@ class GameState:
         self.eaten_pellets: set[Vector2] = set()
         self.eaten_power_pellets: set[Vector2] = set()
         self._next_level()
+        self._won = False
 
     def set_player_invincible(self, value: bool):
         self._player_invincible = value
@@ -104,6 +105,10 @@ class GameState:
         return self._gameover
 
     @property
+    def won(self) -> bool:
+        return self._won
+
+    @property
     def player(self) -> Player:
         return self._player
 
@@ -119,8 +124,9 @@ class GameState:
 
     def next_level(self) -> None:
         """Cheat: skip to the next level."""
-        if self._allow_cheats:
-            self._next_level()
+        if self._allow_cheats and self._level_number < c.MAX_LEVELS:
+            if self._allow_cheats and self._level_number < c.MAX_LEVELS:
+                self._next_level()
 
     def restart_current_level(self) -> None:
         # Restarting must not keep points earned in the abandoned attempt.
@@ -129,7 +135,8 @@ class GameState:
 
     def _reset_level(self) -> None:
         self._ticks = 0
-        self.level = self.generator.generate(c.FIXED_FIRST_SEED + self._level_number - 1)
+        self.level = self.generator.generate(c.FIXED_FIRST_SEED +
+                                             self._level_number - 1)
         self._player = Player(self.level.player_start)
         ghost_speed = c.GHOST_SPEED
         self.ghosts = [
@@ -157,6 +164,10 @@ class GameState:
                 self._gameover = True
 
         if len(self.level.pellets) == 0:
+            if self._level_number >= c.MAX_LEVELS:
+                self._won = True
+                self.paused = True
+                return
             self._next_level()
 
         self._tick_entities()

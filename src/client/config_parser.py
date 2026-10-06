@@ -1,18 +1,4 @@
-"""Loading and validating config.json for the Pac-Man client.
-
-    cfg = load_config(path)           # raises ConfigError on any problem
-    cfg.apply()                       # overrides the defaults in constants.py
-
-The command-line check (exactly one argument, ending in .json) lives in
-pac-man.py.
-
-The file is JSON that may contain comments:
-    // line comment      # line comment      /* block comment */
-Every key is optional; anything missing keeps its default from constants.py.
-"""
-
 from __future__ import annotations
-
 import difflib
 import json
 import sys
@@ -24,7 +10,7 @@ import src.client.constants as c
 
 # Limits
 MAX_LEVELS_ALLOWED = 50
-MAX_LIVES = 8              # the HUD has room for about this many icons
+MAX_LIVES = 8
 MAX_POINTS = 1_000_000
 MAX_TIME = 3600
 MAX_SEED = 2**31 - 1
