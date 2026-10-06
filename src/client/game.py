@@ -5,6 +5,7 @@ from src.client.entities import Player, Ghost, Blinky, Pinky, Inky, Clyde
 import src.client.constants as c
 from src.client.level import Level, LevelGenerator
 from src.client.vector2 import Vector2
+import src.client.audio as audio
 
 
 class GameState:
@@ -29,13 +30,13 @@ class GameState:
         self.killed_by: Optional[Ghost] = None
         self._level_start_score: int = 0
         self._ghost_combo: int = 0
+        self._won = False
         self.eaten_dots: int = 0
         self.eaten_energizers: int = 0
         self.eaten_pellets: set[Vector2] = set()
         self.eaten_power_pellets: set[Vector2] = set()
         self._next_level()
-        self._won = False
-
+        
     def set_player_invincible(self, value: bool):
         self._player_invincible = value
 
@@ -125,8 +126,7 @@ class GameState:
     def next_level(self) -> None:
         """Cheat: skip to the next level."""
         if self._allow_cheats and self._level_number < c.MAX_LEVELS:
-            if self._allow_cheats and self._level_number < c.MAX_LEVELS:
-                self._next_level()
+            self._next_level()
 
     def restart_current_level(self) -> None:
         # Restarting must not keep points earned in the abandoned attempt.
@@ -134,6 +134,7 @@ class GameState:
         self._reset_level()
 
     def _reset_level(self) -> None:
+        audio.stop("frightened")
         self._ticks = 0
         self.level = self.generator.generate(c.FIXED_FIRST_SEED +
                                              self._level_number - 1)
@@ -156,12 +157,15 @@ class GameState:
         if self._frightened_timer > 0:
             self._frightened_timer -= 1
         else:
+            if self._frightened:
+                audio.stop("frightened")
             self._frightened = False
 
         if not self._time_frozen:
             self._ticks += 1
             if self._ticks >= self.time_limit_ticks:
                 self._gameover = True
+                audio.stop("frightened")
 
         if len(self.level.pellets) == 0:
             if self._level_number >= c.MAX_LEVELS:
@@ -180,23 +184,29 @@ class GameState:
             if math.dist(g.pos, self.player.pos) < 0.25:
                 if self._frightened:
                     g.is_eaten = True
+                    audio.play("eat_ghost")
                     self.score += c.SCORE_GHOST * 2 ** self._ghost_combo
                     self._ghost_combo += 1
                 elif not self._player_invincible:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
                         self._gameover = True
+                        audio.stop("frightened")
                         self.killed_by = g
                     else:
+                        audio.play("death")
                         self.player.teleport_home()
 
         if self.player.cell in self.level.pellets:
             if (self.player.pos.distance_to(self.player.cell)) < 0.25:
                 self.level.pellets.remove(self.player.cell)
+                audio.play("chomp", only_if_idle=True)
                 if not self._allow_cheats:
                     self.score += c.SCORE_PELLET
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
+            audio.play("power")
+            audio.play_loop("frightened")
             self.score += c.SCORE_POWER_PELLET
             self._ghost_combo = 0
             self._frightened_timer = int(c.FPS * 10)

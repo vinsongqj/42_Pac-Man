@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pygame
+import src.client.audio as audio
 import src.client.constants as c
 from src.client import config_parser
 from src.client.scene_utils import SceneState, SceneManager
@@ -29,7 +30,9 @@ def main() -> None:
         sys.exit(1)
     cfg.apply()
 
+    pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
+    audio.load_all()
     pygame.display.set_mode((MENU_WIDTH, MENU_HEIGHT),
                             pygame.RESIZABLE | pygame.SCALED)
     pygame.display.set_caption("42 Pac-Man")

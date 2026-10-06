@@ -8,6 +8,7 @@ from src.client.game import GameState
 from src.client.graphics import Graphics
 from src.client.scene_utils import SceneState, Scene, SceneResult
 from src.client.scores import SCOREBOARD
+import src.client.audio as audio
 
 
 MOVE_KEYS = {
@@ -23,51 +24,26 @@ MOVE_KEYS = {
 
 MENU_WIDTH = 900
 MENU_HEIGHT = 1000
-
-# Fits the name column of the main menu's high score table.
 MAX_NAME_LENGTH = 7
-# A run can only be saved with a name at least this long.
 MIN_NAME_LENGTH = 3
-# Ignore keys briefly after the end screen appears, so a player still
-# mashing W/A/S/D doesn't type into the name field by accident.
 NAME_INPUT_GRACE_MS = 500
-# Distance from the name box centre down to the first menu option.
 NAME_SCREEN_OPTIONS_GAP = 150
 JUMPSCARE_MS = 500
-# Victory intro: the pacman image floats up from the bottom right to the
-# centre of the screen over the live game. From there it eases (zooms, moves
-# and rotates all at once) into the spot set below and stays there as the
-# backdrop. The victory screen (dim layer + UI) appears VICTORY_UI_DELAY_MS
-# after that has finished.
 VICTORY_PACMAN_IMAGE: str = c.PACMAN_IMAGE
-VICTORY_PACMAN_SIZE: Optional[tuple[int, int]] = None  # None = native size
-VICTORY_RISE_MS = 1000         # time to float up to the screen centre
-VICTORY_ZOOM_MS = 800          # time to ease from the centre into place
-# Final size of the image, as a multiple of its starting size.
-# None = automatic: exactly big enough to cover the whole screen.
-# Tweak this (e.g. 2.0, 3.5) to make it smaller or larger.
+VICTORY_PACMAN_SIZE: Optional[tuple[int, int]] = None
+VICTORY_RISE_MS = 1000
+VICTORY_ZOOM_MS = 800
 VICTORY_ZOOM_SCALE: Optional[float] = 2.7
-# Final position: the chosen point of the (zoomed) image (VICTORY_ANCHOR) is
-# pinned to the same point of the screen, then moved by VICTORY_OFFSET.
-# VICTORY_OFFSET = (dx, dy, rotation):
-#   dx: pixels, +right    dy: pixels, +down
-#   rotation: degrees, +clockwise (negative = counter-clockwise), turned
-#             about the image's centre. It eases in from 0 along with the
-#             move, so the slide-in stays upright.
-# Anchors: "center", "midtop", "midbottom", "midleft", "midright",
-#          "topleft", "topright", "bottomleft", "bottomright"
-# Note: the automatic cover size assumes a centred, unrotated image; if you
-# move, re-anchor or rotate it and gaps appear at the edges, set
-# VICTORY_ZOOM_SCALE higher.
 VICTORY_ANCHOR: str = "center"
 VICTORY_OFFSET: tuple[float, float, float] = (-40, 150, 0)
-VICTORY_UI_DELAY_MS = 400      # extra beat before the UI shows
+VICTORY_UI_DELAY_MS = 400
 JUMPSCARE_SHAKE_PX = 12
 JUMPSCARE_IMAGE: Optional[str] = "assets/images/jumpscare.png"
 
 
 class MenuScene(Scene):
     def on_enter(self, **kwargs: Any) -> None:
+        audio.play_music("cheat" if c.CHEATS_ENABLED else "menu")
         rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
         self.title_text = display.Text(
             text="PAC-MAN",
@@ -101,7 +77,6 @@ class MenuScene(Scene):
             anchor="center",
         )
 
-        # ESC opens a small QUIT confirmation menu over the main menu.
         self._quit_menu_open = False
         self._quit_selected = 0
         self._quit_options: list[MenuOption] = [
@@ -345,6 +320,7 @@ class GameScene(Scene):
         if self._hud is None:
             self._hud = HUD(self.graphics.screen_size)
         self._update_hud()
+        audio.stop_music()
 
     def _update_hud(self) -> None:
         assert self._hud is not None
@@ -457,6 +433,7 @@ class JumpscareScene(Scene):
             MENU_WIDTH // 2 + random.randint(-shake, shake),
             MENU_HEIGHT // 2 + random.randint(-shake, shake)))
         surface.blit(self._image, rect)
+        audio.play("jumpscare")
 
 
 MenuOption = tuple[str, Callable[[], SceneResult]]
@@ -792,6 +769,10 @@ class GameOverScene(ScoreScreen):
     title = "GAME OVER"
     title_color = (255, 0, 0)
 
+    def on_enter(self, **kwargs: Any) -> None:
+        super().on_enter(**kwargs)
+        audio.play_music("game_over")
+
     def headline(self) -> str:
         level = self.game.level_number if self.game is not None else 1
         return f"Level {level}"
@@ -818,6 +799,7 @@ class VictoryScene(ScoreScreen):
 
     def on_enter(self, **kwargs: Any) -> None:
         super().on_enter(**kwargs)
+        audio.play_music("victory")
         self._pacman = display.Image.load_surface(
             VICTORY_PACMAN_IMAGE, VICTORY_PACMAN_SIZE)
         self._zoom_scale = self._final_scale()
