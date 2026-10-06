@@ -92,23 +92,23 @@ PLAYER_FRAME_INTERVAL = 8
 MAIN_MENU_PACMAN_IMAGE = "assets/images/main_menu/pacman.png"
 PACMAN_IMAGE = "assets/images/pacman.png"
 
-CHEAT_MUSIC = "assets/audio/cheat.mp3"
+CHEAT_MUSIC = "assets/audio/cheat.ogg"
 CHEAT_MUSIC_VOLUME = 0.5
 
 SFX_VOLUME = 0.6
 SFX = {
-    "chomp":     ["assets/audio/eat_dot_0.wav", "assets/audio/eat_dot_1.wav"],
-    "power":     "assets/audio/eat_pacgum.wav",
-    "eat_ghost": "assets/audio/eat_ghost.wav",
-    "death":     "assets/audio/death.wav",
-    "frightened": "assets/audio/frightened.wav",
-    "jumpscare": "assets/audio/jumpscare.wav"
+    "chomp":     ["assets/audio/eat_dot_0.ogg", "assets/audio/eat_dot_1.ogg"],
+    "power":     "assets/audio/eat_pacgum.ogg",
+    "eat_ghost": "assets/audio/eat_ghost.ogg",
+    "death":     "assets/audio/death.ogg",
+    "frightened": "assets/audio/frightened.ogg",
+    "jumpscare": "assets/audio/jumpscare.ogg"
 }
 
 MUSIC_VOLUME = 0.5
 MUSIC = {
-    "menu": ("assets/audio/menu.mp3", -1),
-    "cheat": ("assets/audio/cheat.mp3", -1),
-    "victory": ("assets/audio/victory.mp3", -1),
+    "menu": ("assets/audio/menu.ogg", -1),
+    "cheat": ("assets/audio/cheat.ogg", -1),
+    "victory": ("assets/audio/victory.ogg", -1),
     "game_over": ("assets/audio/lose.ogg", -1)
 }

@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-
 import pygame
 import src.client.audio as audio
 import src.client.constants as c
