@@ -11,19 +11,39 @@ from src.client.scenes import (
     MENU_WIDTH, MENU_HEIGHT,
 )
 
+# Resolve base path for PyInstaller or raw execution
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys._MEIPASS)
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+
+import os
+os.chdir(BASE_DIR)
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
+
 
 def main() -> None:
-    if len(sys.argv) != 2:
-        print("usage: python3 pac-man.py config.json", file=sys.stderr)
+    # 1. CLI Argument provided: use the specified config path
+    if len(sys.argv) == 2:
+        config_path = Path(sys.argv[1])
+        if config_path.suffix.lower() != ".json":
+            print(f"Error: '{config_path}' is not a .json file",
+                  file=sys.stderr)
+            sys.exit(1)
+    # 2. No CLI Argument (e.g., PyInstaller double-click): fallback to config
+    elif len(sys.argv) == 1:
+        config_path = BASE_DIR / "config.json"
+    else:
+        print("usage: python3 main.py [config.json]", file=sys.stderr)
         sys.exit(1)
 
-    config_path = sys.argv[1]
-    if Path(config_path).suffix.lower() != ".json":
-        print(f"Error: '{config_path}' is not a .json file", file=sys.stderr)
+    if not config_path.exists():
+        print(f"Error: Could not find '{config_path}'", file=sys.stderr)
         sys.exit(1)
 
     try:
-        cfg = config_parser.load_config(config_path)
+        cfg = config_parser.load_config(str(config_path))
     except config_parser.ConfigError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

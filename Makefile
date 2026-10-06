@@ -1,11 +1,15 @@
-.PHONY: install run debug clean lint lint-strict
+.PHONY: install build run debug clean lint lint-strict
 
 
 install:
 	@echo "Installing dependencies..."
 	@uv sync
 	@echo "Dependencies installed!"
-run:
+
+build:	install
+	@pyinstaller --clean pac-man.py --name pac-man --onefile --add-data "assets:assets" --add-data "config.json:." --hidden-import mazegenerator
+
+run:	install
 	uv run pac-man.py config.json
 
 debug:
@@ -14,7 +18,7 @@ debug:
 clean:
 	@find . -type d -name __pycache__ -exec rm -rf {} +
 	@find . -type d -name .mypy_cache -exec rm -rf {} +
-	@rm -rf venv .venv
+	@rm -rf venv .venv build dist *.spec
 
 lint:
 	@flake8 . --exclude=./venv,venv,*/venv/*,.venv
