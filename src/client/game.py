@@ -160,8 +160,9 @@ class GameState:
                         self.player.teleport_home()
 
         if self.player.cell in self.level.pellets:
-            self.level.pellets.remove(self.player.cell)
-            self.score += c.SCORE_PELLET
+            if (self.player.pos.distance_to(self.player.cell)) < 0.25:
+                self.level.pellets.remove(self.player.cell)
+                self.score += c.SCORE_PELLET
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
             self.score += c.SCORE_POWER_PELLET
