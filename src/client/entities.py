@@ -295,7 +295,7 @@ class Clyde(Ghost):
         super().__init__("yellow", pos, speed)
 
     def _get_target_pos(self, game: "GameState") -> Vector2:
-        if game.player.pos.distance_to(self.pos) > 8 or self.is_eaten:
+        if game.player.pos.distance_to(self.pos) > 8 and not self.is_eaten:
             target = game.player.pos
         else:
             target = self.home
