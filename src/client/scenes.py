@@ -353,9 +353,11 @@ class GameScene(Scene):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 return SceneState.PAUSED, self._game_kwargs()
-            elif event.key == pygame.K_n:
+            elif event.key == pygame.K_n and self.game.allow_cheats:
                 self.game.next_level()
                 self.graphics.on_new_level()
+            elif event.key == pygame.K_t and self.game.allow_cheats:
+                self.game.add_player_life()
             elif event.key == pygame.K_r:
                 self.game.restart_current_level()
                 self.graphics.on_new_level()

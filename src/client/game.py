@@ -8,7 +8,10 @@ from src.client.vector2 import Vector2
 
 
 class GameState:
-    def __init__(self, size: tuple[int, int] = c.MAZE_SIZE) -> None:
+    def __init__(self, size: tuple[int, int] = c.MAZE_SIZE, allow_cheats = True) -> None:
+        self._allow_cheats = allow_cheats
+        self._ghosts_freezed = False
+        self._player_invincible = False
         self._ticks: int = 0
         self.paused: bool = False
         self._gameover = False
@@ -28,7 +31,29 @@ class GameState:
         self.eaten_energizers: int = 0
         self.eaten_pellets: set[Vector2] = set()
         self.eaten_power_pellets: set[Vector2] = set()
-        self.next_level()
+        self._next_level()
+
+    def set_player_invincible(self, value: bool):
+        self._player_invincible = value
+
+    def ghosts_freeze(self):
+        self._ghosts_freezed = self.allow_cheats
+
+    def ghosts_unfreeze(self):
+        if self._allow_cheats:
+            self._ghosts_freezed = False
+
+    def add_player_life(self):
+        if self._allow_cheats:
+            self.player.increase_remaining_lives()
+
+    @property
+    def ghosts_freezed(self):
+        return self._ghosts_freezed
+
+    @property
+    def allow_cheats(self) -> bool:
+        return self._allow_cheats
 
     @property
     def frightened(self) -> bool:
@@ -64,11 +89,15 @@ class GameState:
     def player(self) -> Player:
         return self._player
 
-    def next_level(self) -> None:
+    def _next_level(self) -> None:
         self._level_number += 1
         self._level_start_score = self.score
         self._reset_level()
         self.paused = True
+
+    def next_level(self) -> None:
+        if self._allow_cheats:
+            self._next_level()
 
     def restart_current_level(self) -> None:
         # Restarting must not keep points earned in the abandoned attempt.
@@ -104,7 +133,7 @@ class GameState:
             self._gameover = True
 
         if len(self.level.pellets) == 0:
-            self.next_level()
+            self._next_level()
 
         self._tick_entities()
 
@@ -118,7 +147,7 @@ class GameState:
                     g.is_eaten = True
                     self.score += c.SCORE_GHOST * 2 ** self._ghost_combo
                     self._ghost_combo += 1
-                else:
+                elif not self._player_invincible:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
                         self._gameover = True
@@ -138,5 +167,6 @@ class GameState:
 
     def _tick_entities(self) -> None:
         self.player.tick(self.level)
-        for ghost in self.ghosts:
-            ghost.tick(self)
+        if not self._ghosts_freezed:
+            for ghost in self.ghosts:
+                ghost.tick(self)
