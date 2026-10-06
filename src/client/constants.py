@@ -110,5 +110,5 @@ MUSIC = {
     "menu": ("assets/audio/menu.mp3", -1),
     "cheat": ("assets/audio/cheat.mp3", -1),
     "victory": ("assets/audio/victory.mp3", -1),
-    "game_over": ("assets/audio/lose.mp3", -1)
+    "game_over": ("assets/audio/lose.ogg", -1)
 }
