@@ -7,7 +7,7 @@ install:
 	@echo "Dependencies installed!"
 
 build:	install
-	@pyinstaller --clean pac-man.py --name pac-man --onefile --add-data "assets:assets" --add-data "config.json:." --hidden-import mazegenerator
+	@uv run pyinstaller --clean --noconfirm pac-man.spec
 
 run:	install
 	uv run pac-man.py config.json
