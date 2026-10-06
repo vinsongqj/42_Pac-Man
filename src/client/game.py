@@ -36,6 +36,10 @@ class GameState:
     def set_player_invincible(self, value: bool):
         self._player_invincible = value
 
+    @property
+    def player_invincible(self):
+        return self._player_invincible
+
     def ghosts_freeze(self):
         self._ghosts_freezed = self.allow_cheats
 

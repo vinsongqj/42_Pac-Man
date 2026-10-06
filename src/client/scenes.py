@@ -358,6 +358,9 @@ class GameScene(Scene):
                 self.graphics.on_new_level()
             elif event.key == pygame.K_t and self.game.allow_cheats:
                 self.game.add_player_life()
+            elif event.key == pygame.K_i and self.game.allow_cheats:
+                inv = self.game.player_invincible
+                self.game.set_player_invincible(not inv)
             elif event.key == pygame.K_r:
                 self.game.restart_current_level()
                 self.graphics.on_new_level()
