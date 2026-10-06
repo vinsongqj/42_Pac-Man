@@ -262,13 +262,13 @@ class HUD:
     def __init__(self, screen_size: tuple[int, int]) -> None:
         width, height = screen_size
         self.score_text = display.Text(
-            "SCORE   0", 40, "White", (self.MARGIN_X, self.MARGIN_Y),
+            "SCORE   0", 35, "White", (self.MARGIN_X, self.MARGIN_Y),
             anchor="topleft")
         self.level_text = display.Text(
-            "LEVEL   1", 40, "White",
+            "LEVEL   1", 35, "White",
             (width - self.MARGIN_X, self.MARGIN_Y), anchor="topright")
         self.time_text = display.Text(
-            "0:00", 40, "White", (width // 2, self.MARGIN_Y),
+            "0:00", 35, "White", (width // 2, self.MARGIN_Y),
             anchor="midtop")
         self.hint_lines = [
             display.Text("MOVE:  ARROW KEYS / W A S D", 22, self.HINT_COLOR,
@@ -361,6 +361,11 @@ class GameScene(Scene):
             elif event.key == pygame.K_i and self.game.allow_cheats:
                 inv = self.game.player_invincible
                 self.game.set_player_invincible(not inv)
+            elif event.key == pygame.K_f and self.game.allow_cheats:
+                if self.game.ghosts_freezed:
+                    self.game.ghosts_unfreeze()
+                else:
+                    self.game.ghosts_freeze()
             elif event.key == pygame.K_r:
                 self.game.restart_current_level()
                 self.graphics.on_new_level()

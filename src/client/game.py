@@ -162,7 +162,8 @@ class GameState:
         if self.player.cell in self.level.pellets:
             if (self.player.pos.distance_to(self.player.cell)) < 0.25:
                 self.level.pellets.remove(self.player.cell)
-                self.score += c.SCORE_PELLET
+                if not self._allow_cheats:
+                    self.score += c.SCORE_PELLET
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
             self.score += c.SCORE_POWER_PELLET
