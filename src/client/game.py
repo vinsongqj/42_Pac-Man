@@ -1,3 +1,9 @@
+"""Main gameplay state machine for a Pac-Man run.
+
+This module owns level progression, collisions, scoring, and the state used by
+all scenes and drawing code.
+"""
+
 import math
 from typing import Optional
 
@@ -9,6 +15,7 @@ import src.client.audio as audio
 
 
 class GameState:
+    """Tracks the active level, player, ghosts, score, and win/lose state."""
     def __init__(self, size: tuple[int, int] = c.MAZE_SIZE,
                  allow_cheats: bool = False) -> None:
         self._allow_cheats = allow_cheats

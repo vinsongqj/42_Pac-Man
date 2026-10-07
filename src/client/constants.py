@@ -1,3 +1,8 @@
+"""Gameplay, rendering, and asset constants for the Pac-Man client.
+
+The values in this module are shared across the game loop, sprites, and UI.
+"""
+
 from src.client.vector2 import Vector2
 
 FPS = 60.0
@@ -76,6 +81,14 @@ _DIRECTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
 
 
 def _same_for_all_directions(frames: list[str]) -> dict[str, list[str]]:
+    """Duplicate one sprite sequence for all movement directions.
+
+    Args:
+        frames (list[str]): Sprite file paths to reuse.
+
+    Returns:
+        dict[str, list[str]]: A mapping for each direction to the same frame list.
+    """
     return {d: list(frames) for d in _DIRECTIONS}
 
 

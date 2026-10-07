@@ -1,9 +1,16 @@
+"""2D vector helpers used by movement, AI, and rendering.
+
+The project stores maze coordinates, player movement deltas, and sprite
+positions as Vector2 values to keep arithmetic consistent throughout the game.
+"""
+
 from collections.abc import Iterator
 import math
 from typing import Self
 
 
 class Vector2:
+    """A small immutable 2D vector used for maze math and sprite positions."""
     def __init__(self, x: float | int, y: float | int) -> None:
         self._x: float | int = x
         self._y: float | int = y
@@ -71,6 +78,17 @@ class Vector2:
         return f"Vector2({self._x}, {self._y})"
 
     def distance_to(self, to: 'Vector2') -> float:
+        """Measure the Euclidean distance between this vector and another.
+
+        Args:
+            to (Vector2): The destination point.
+
+        Returns:
+            float: The straight-line distance between both points.
+
+        Raises:
+            TypeError: If the target is not a Vector2 instance.
+        """
         if not isinstance(to, Vector2):
             raise TypeError(
                 f"distance_to expects Vector2, got {type(to).__name__}"

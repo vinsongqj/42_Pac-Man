@@ -1,3 +1,9 @@
+"""Scene definitions for the menu, gameplay, and end-of-run overlays.
+
+The project uses a simple scene stack where each screen handles its own input,
+state transitions, and rendering responsibilities.
+"""
+
 from typing import Optional, Any, Callable
 import pygame
 import random
@@ -42,6 +48,8 @@ JUMPSCARE_IMAGE: Optional[str] = "assets/images/jumpscare.png"
 
 
 class MenuScene(Scene):
+    """Main menu with leaderboard, title, and quit confirmation."""
+
     def on_enter(self, **kwargs: Any) -> None:
         audio.play_music("cheat" if c.CHEATS_ENABLED else "menu")
         rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
@@ -303,6 +311,8 @@ class HUD:
 
 
 class GameScene(Scene):
+    """The active Pac-Man play screen with gameplay, HUD, and transitions."""
+
     def __init__(self) -> None:
         self._hud: Optional[HUD] = None
 
@@ -452,12 +462,15 @@ GHOST_TRAIL_SPEED = 45.0      # pixels per second; negative scrolls upward
 
 
 class OverlayMenuScene(Scene):
-    """Base for pause / victory / game over: the frozen game is drawn
-    dimmed in the background with a keyboard-driven menu on top.
+    """Base for pause / victory / game over overlays.
 
-    Subclasses can add info lines under the title and, by returning True
-    from wants_name_entry(), a name prompt that must be completed (or
-    skipped with ESC) before the menu becomes active."""
+    The frozen game is drawn dimmed under a keyboard-driven menu and can be
+    customized by subclasses to match their flow and actions.
+
+    Subclasses can add info lines under the title and, by returning True from
+    wants_name_entry(), a name prompt that must be completed (or skipped with
+    ESC) before the menu becomes active.
+    """
 
     title: str = ""
     title_color: display.ColorType = "White"
@@ -703,6 +716,8 @@ class OverlayMenuScene(Scene):
 
 
 class PauseScene(OverlayMenuScene):
+    """Overlay shown when the player pauses the current round."""
+
     title = "PAUSED"
 
     def options(self) -> list[MenuOption]:
@@ -728,8 +743,11 @@ class PauseScene(OverlayMenuScene):
 
 
 class ScoreScreen(OverlayMenuScene):
-    """Shared by game over and victory: shows the final score, the high
-    score, and asks for a name to put the run on the leaderboard."""
+    """Shared flow for game-over and victory end screens.
+
+    Shows the final score, optional leaderboard prompt, and the menu actions the
+    player can choose from after a run ends.
+    """
 
     def headline(self) -> str:
         raise NotImplementedError
@@ -767,6 +785,8 @@ class ScoreScreen(OverlayMenuScene):
 
 
 class GameOverScene(ScoreScreen):
+    """End-of-run screen shown after the player loses a run."""
+
     title = "GAME OVER"
     title_color = (255, 0, 0)
 
@@ -785,7 +805,7 @@ class GameOverScene(ScoreScreen):
 
 
 class VictoryScene(ScoreScreen):
-    """Shown once, after the final level (c.MAX_LEVELS) is cleared."""
+    """Final celebration screen shown after the last level is cleared."""
 
     title = "YOU WIN!"
     title_color = (255, 255, 255)

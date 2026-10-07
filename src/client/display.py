@@ -1,3 +1,9 @@
+"""Display primitives for text and image elements in the game UI.
+
+These helpers wrap pygame surfaces and positioning so menus and in-game HUD
+widgets can be created consistently across scenes.
+"""
+
 import os
 import math
 import pygame
@@ -9,6 +15,8 @@ ColorType = Union[str, tuple[int, ...], pygame.Color]
 
 
 class Layout:
+    """Positioning and rendering metadata for a drawable surface."""
+
     def __init__(self,
                  surface: pygame.Surface,
                  pos: CoordinateType,
@@ -39,6 +47,8 @@ class Layout:
 
 
 class Element:
+    """Base drawable element that stores a surface and its layout box."""
+
     def __init__(self,
                  surface: pygame.Surface,
                  pos: CoordinateType,
@@ -54,6 +64,8 @@ class Element:
 
 
 class Text(Element):
+    """Text rendered with a font and optional fade animation."""
+
     def __init__(
             self,
             text: str,
@@ -96,6 +108,7 @@ class Text(Element):
 
 
 class Image(Element):
+    """Image-backed UI element with optional caching for repeated assets."""
 
     _surface_cache: dict[tuple[str, Optional[tuple[int, int]], bool],
                          pygame.Surface] = {}
@@ -117,7 +130,16 @@ class Image(Element):
             image_path: str,
             scale_size: Optional[tuple[int, int]] = None,
             smooth: bool = True) -> pygame.Surface:
+        """Load an image surface, reusing cached copies when possible.
 
+        Args:
+            image_path (str): File location of the source image.
+            scale_size (Optional[tuple[int, int]]): Desired output size.
+            smooth (bool): Whether to use smooth scaling for resized images.
+
+        Returns:
+            pygame.Surface: The loaded and optionally scaled image surface.
+        """
         cache_key = (image_path, scale_size, smooth)
         cached = cls._surface_cache.get(cache_key)
         if cached is not None:

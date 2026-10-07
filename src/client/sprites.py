@@ -1,3 +1,9 @@
+"""Animated sprite wrappers for the player and ghosts.
+
+Each sprite manages its current frame, direction, and offset within the maze so
+it can be drawn smoothly as the game state changes.
+"""
+
 from typing import Optional, Union, cast
 import pygame
 
@@ -24,6 +30,7 @@ FramesType = Union[list[str], dict[str, list[str]]]
 
 
 class Sprite(Image):
+    """Base drawable sprite that supports animation and direction handling."""
 
     _rotated_cache: dict[tuple[str, int], pygame.Surface] = {}
 
@@ -127,6 +134,8 @@ class Sprite(Image):
 
 
 class PlayerSprite(Sprite):
+    """Animated pac-man sprite that tracks direction and movement frames."""
+
     def __init__(self,
                  grid_pos: tuple[int, int],
                  offset: tuple[int, int] = (0, 0)) -> None:
@@ -156,6 +165,8 @@ class PlayerSprite(Sprite):
 
 
 class GhostSprite(Sprite):
+    """Animated ghost sprite for normal, frightened, ending, and eaten states."""
+
     def __init__(self,
                  name: str,
                  grid_pos: tuple[int, int],

@@ -1,3 +1,9 @@
+"""Audio helpers for music and sound effects.
+
+This module wraps pygame mixer calls and centralizes the loading and playback
+logic for all SFX and music tracks used in the game.
+"""
+
 import sys
 from typing import Union, Optional
 
@@ -11,6 +17,14 @@ _next: dict[str, int] = {}
 
 
 def _load(path: str) -> Union[pygame.mixer.Sound, None]:
+    """Load a single sound file and ignore missing assets gracefully.
+
+    Args:
+        path (str): Path to the audio file.
+
+    Returns:
+        pygame.mixer.Sound | None: The loaded sound, or None when the file fails.
+    """
     try:
         snd = pygame.mixer.Sound(path)
         snd.set_volume(c.SFX_VOLUME)
@@ -21,6 +35,7 @@ def _load(path: str) -> Union[pygame.mixer.Sound, None]:
 
 
 def load_all() -> None:
+    """Load every configured sound effect into the in-memory cache."""
     for name, paths in c.SFX.items():
         if isinstance(paths, str):
             paths = [paths]
@@ -31,10 +46,16 @@ def load_all() -> None:
 
 
 def play(name: str, only_if_idle: bool = False) -> None:
-    """Play an sfx. If it has several files, each call plays the next one.
+    """Play a sound effect.
 
-    only_if_idle: do nothing while any of its sounds is still playing
-    (the cycle does not advance), so rapid repeats don't stack."""
+    Args:
+        name (str): Sound name from the configuration table.
+        only_if_idle (bool): When True, do not replay if an instance is still
+            playing.
+
+    Returns:
+        None: The sound is started asynchronously by pygame.
+    """
     sounds = _sounds.get(name)
     if not sounds:
         return
@@ -95,5 +116,6 @@ def play_loop(name: str) -> None:
 
 
 def stop(name: str) -> None:
+    """Stops the sound."""
     for snd in _sounds.get(name, []):
         snd.stop()

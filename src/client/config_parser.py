@@ -1,3 +1,9 @@
+"""Configuration loader and validator for the Pac-Man client.
+
+The game reads a JSON config file, strips comments, validates each field, and
+applies the values onto the runtime constants used by the client.
+"""
+
 from __future__ import annotations
 import difflib
 import json

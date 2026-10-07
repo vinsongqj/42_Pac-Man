@@ -1,3 +1,9 @@
+"""Maze generation and pathfinding for the Pac-Man board.
+
+Each level is built from a generated maze and exposes walkable cells, pellets,
+and player/ghost spawn positions.
+"""
+
 from collections import deque
 from src.client.constants import UP, DOWN, LEFT, RIGHT, MAZE_SIZE
 from mazegenerator import MazeGenerator
@@ -5,6 +11,7 @@ from src.client.vector2 import Vector2
 
 
 class LevelGenerator:
+    """Creates randomized maze layouts for each game level."""
     def __init__(self, size: tuple[int, int] = MAZE_SIZE):
         self._size = size
         self._generator = MazeGenerator(size=size, perfect=False, seed=42)
@@ -17,6 +24,8 @@ class LevelGenerator:
 
 
 class Level:
+    """Represents a maze, including pellets, spawn points, and walkability."""
+
     def __init__(self, maze: list[list[int]]):
         self._maze: list[list[int]] = maze
         self._width: int = len(self._maze[0])

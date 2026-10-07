@@ -1,9 +1,16 @@
+"""Scene lifecycle helpers for the menu and game flow.
+
+Each screen in the game is represented as a Scene with a finite state machine
+that handles events, updates, and drawing transitions.
+"""
+
 from enum import Enum, auto
 from typing import Any, Optional, Union
 import pygame
 
 
 class SceneState(Enum):
+    """State names used by the scene manager for menu and gameplay screens."""
     MENU = auto()
     PLAYING = auto()
     PAUSED = auto()
@@ -20,6 +27,8 @@ SceneResult = Optional[Union[SceneState, tuple[SceneState, dict[str, Any]]]]
 
 
 class Scene:
+    """Base interface for all screens and overlays in the game."""
+
     def on_enter(self, **kwargs: Any) -> None:
         pass
 
@@ -38,6 +47,8 @@ class Scene:
 
 
 class SceneManager:
+    """Switches between scenes and dispatches events to the active screen."""
+
     def __init__(self,
                  screens: dict[SceneState, Scene],
                  start: SceneState) -> None:

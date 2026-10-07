@@ -1,3 +1,9 @@
+"""Entity and AI logic for the player and the chasing ghosts.
+
+The game loop updates entity positions, input, and ghost targeting so that the
+maze and collisions stay synchronized with rendering and scene logic.
+"""
+
 from abc import ABC, abstractmethod
 import random
 from typing import TYPE_CHECKING, Optional
@@ -13,6 +19,8 @@ THRESHOLD = 0.05
 
 
 class Entity(ABC):
+    """Base entity with shared movement, direction, and position behavior."""
+
     def __init__(self, pos: Vector2) -> None:
         self._pos: Vector2 = pos
         self._home: Vector2 = pos
@@ -91,6 +99,8 @@ class Entity(ABC):
 
 
 class Player(Entity):
+    """The controllable pac-man character and the player’s live state."""
+
     def __init__(self, pos: Vector2) -> None:
         super().__init__(pos)
         self.pending_direction: Vector2 = Vector2(0, 0)
@@ -173,6 +183,8 @@ class Player(Entity):
 
 
 class Ghost(Entity, ABC):
+    """Abstract ghost AI base class shared by each ghost personality."""
+
     def __init__(self, name: str, pos: Vector2) -> None:
         super().__init__(pos)
         self._name: str = name

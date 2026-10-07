@@ -1,3 +1,5 @@
+"""Rendering utilities for maze walls, pellets, and animated sprites."""
+
 import pygame
 import src.client.constants as c
 from src.client.sprites import PlayerSprite, GhostSprite
@@ -6,6 +8,7 @@ from src.client.game import GameState
 
 
 class Graphics:
+    """Builds and redraws the view for a running game state."""
     def __init__(self, game: GameState) -> None:
         self.game = game
         self._wall_surface: pygame.Surface | None = None

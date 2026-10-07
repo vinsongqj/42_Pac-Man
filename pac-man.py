@@ -1,3 +1,8 @@
+"""Pac-Man desktop entry point.
+
+Runs the client, loads configuration, and manages the scene loop.
+"""
+
 import sys
 from pathlib import Path
 import pygame
@@ -24,6 +29,9 @@ if str(BASE_DIR) not in sys.path:
 
 
 def main() -> None:
+    """
+    Start the game, load the active config, and run the main loop.
+    """
     # 1. CLI Argument provided: use the specified config path
     if len(sys.argv) == 2:
         config_path = Path(sys.argv[1])
