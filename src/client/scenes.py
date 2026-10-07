@@ -345,8 +345,7 @@ class GameScene(Scene):
             elif event.key == pygame.K_t and self.game.allow_cheats:
                 self.game.add_player_life()
             elif event.key == pygame.K_i and self.game.allow_cheats:
-                inv = self.game.player_invincible
-                self.game.set_player_invincible(not inv)
+                self.game.toggle_player_invincibility()
             elif event.key == pygame.K_f and self.game.allow_cheats:
                 if self.game.ghosts_freezed:
                     self.game.ghosts_unfreeze()
