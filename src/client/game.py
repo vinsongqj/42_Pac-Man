@@ -47,20 +47,20 @@ class GameState:
     def player_invincible(self) -> bool:
         return self.player.is_invincible
 
-    def toggle_player_invincibility(self):
+    def toggle_player_invincibility(self) -> None:
         """Toggle invincibility for the player when cheat mode is enabled."""
         self._player.toggle_invincibility()
 
-    def ghosts_freeze(self):
+    def ghosts_freeze(self) -> None:
         """Freeze all ghosts when cheat mode allows it."""
         self._ghosts_freezed = self.allow_cheats
 
-    def ghosts_unfreeze(self):
+    def ghosts_unfreeze(self) -> None:
         """Unfreeze ghosts if cheat mode is active."""
         if self._allow_cheats:
             self._ghosts_freezed = False
 
-    def add_player_life(self):
+    def add_player_life(self) -> None:
         """Grant the player an extra life inside cheat mode."""
         if self._allow_cheats:
             self.player.increase_remaining_lives()
@@ -84,7 +84,7 @@ class GameState:
         return int(self._timer // c.FPS)
 
     @property
-    def ghosts_freezed(self):
+    def ghosts_freezed(self) -> bool:
         return self._ghosts_freezed
 
     @property
@@ -174,7 +174,6 @@ class GameState:
         self.eaten_power_pellets = set()
 
     def tick(self) -> None:
-        """Advance the game state by one simulation tick and resolve interactions."""
         if (self.paused or self._gameover):
             return
 

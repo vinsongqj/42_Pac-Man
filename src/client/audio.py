@@ -1,30 +1,13 @@
-"""Audio helpers for music and sound effects.
-
-This module wraps pygame mixer calls and centralizes the loading and playback
-logic for all SFX and music tracks used in the game.
-"""
-
 import sys
 from typing import Union, Optional
-
 import pygame
 import src.client.constants as c
 
-# name -> loaded sounds, in cycle order (a single sound is a list of one)
 _sounds: dict[str, list[pygame.mixer.Sound]] = {}
-# name -> index of the next sound to play
 _next: dict[str, int] = {}
 
 
 def _load(path: str) -> Union[pygame.mixer.Sound, None]:
-    """Load a single sound file and ignore missing assets gracefully.
-
-    Args:
-        path (str): Path to the audio file.
-
-    Returns:
-        pygame.mixer.Sound | None: The loaded sound, or None when the file fails.
-    """
     try:
         snd = pygame.mixer.Sound(path)
         snd.set_volume(c.SFX_VOLUME)
@@ -35,7 +18,6 @@ def _load(path: str) -> Union[pygame.mixer.Sound, None]:
 
 
 def load_all() -> None:
-    """Load every configured sound effect into the in-memory cache."""
     for name, paths in c.SFX.items():
         if isinstance(paths, str):
             paths = [paths]
@@ -46,16 +28,6 @@ def load_all() -> None:
 
 
 def play(name: str, only_if_idle: bool = False) -> None:
-    """Play a sound effect.
-
-    Args:
-        name (str): Sound name from the configuration table.
-        only_if_idle (bool): When True, do not replay if an instance is still
-            playing.
-
-    Returns:
-        None: The sound is started asynchronously by pygame.
-    """
     sounds = _sounds.get(name)
     if not sounds:
         return
@@ -69,8 +41,6 @@ _current_music: Optional[str] = None
 
 
 def play_music(name: str) -> None:
-    """Switch the background track. Does nothing if it's already playing,
-    so re-entering a scene (e.g. resuming from pause) doesn't restart it."""
     global _current_music
     if name == _current_music and pygame.mixer.music.get_busy():
         return
@@ -91,28 +61,17 @@ def play_music(name: str) -> None:
 
 
 def stop_music() -> None:
-    """Stop the currently playing background music."""
     global _current_music
     pygame.mixer.music.stop()
     _current_music = None
 
 
 def stop_music_if(name: str) -> None:
-    """Stop the background track only if it matches the requested name.
-
-    Args:
-        name (str): The music track to stop.
-    """
     if _current_music == name:
         stop_music()
 
 
 def play_loop(name: str) -> None:
-    """Start a looping sound effect if it is not already active.
-
-    Args:
-        name (str): The sound effect name.
-    """
     sounds = _sounds.get(name)
     if not sounds:
         return
@@ -123,10 +82,5 @@ def play_loop(name: str) -> None:
 
 
 def stop(name: str) -> None:
-    """Stop every active instance of a named sound effect.
-
-    Args:
-        name (str): The sound effect name.
-    """
     for snd in _sounds.get(name, []):
         snd.stop()

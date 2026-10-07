@@ -1,9 +1,3 @@
-"""Maze generation and pathfinding for the Pac-Man board.
-
-Each level is built from a generated maze and exposes walkable cells, pellets,
-and player/ghost spawn positions.
-"""
-
 from collections import deque
 from src.client.constants import UP, DOWN, LEFT, RIGHT, MAZE_SIZE
 from mazegenerator import MazeGenerator
@@ -11,13 +5,11 @@ from src.client.vector2 import Vector2
 
 
 class LevelGenerator:
-    """Creates randomized maze layouts for each game level."""
     def __init__(self, size: tuple[int, int] = MAZE_SIZE):
         self._size = size
         self._generator = MazeGenerator(size=size, perfect=False, seed=42)
 
     def generate(self, seed: int = 42) -> 'Level':
-        """Generate and return a level built from the configured maze seed."""
         self._generator = MazeGenerator(size=self._size, perfect=False,
                                         seed=seed)
         self._generator.generate(seed)
@@ -25,7 +17,6 @@ class LevelGenerator:
 
 
 class Level:
-    """Represents a maze, including pellets, spawn points, and walkability."""
 
     def __init__(self, maze: list[list[int]]):
         self._maze: list[list[int]] = maze
@@ -68,15 +59,6 @@ class Level:
         return self._ghost_starts
 
     def bfs(self, a: Vector2, b: Vector2) -> deque[Vector2] | None:
-        """Find the shortest path from one cell to another.
-
-        Args:
-            a (Vector2): The starting point.
-            b (Vector2): The destination cell.
-
-        Returns:
-            deque[Vector2] | None: A path from a to b, or None if unreachable.
-        """
         a, b = a.round(), b.round()
         if not self._is_walkable(b) or not self._is_walkable(a):
             return None
@@ -84,9 +66,6 @@ class Level:
         goal = (int(b.x), int(b.y))
         if start == goal:
             return deque()
-
-        # Plain int tuples are much cheaper than Vector2 objects here.
-        # Order (down, left, right, up) matches get_walkable_neighbours.
         steps = ((0, 1, 4), (-1, 0, 8), (1, 0, 2), (0, -1, 1))
         maze = self._maze
         width, height = self._width, self._height
@@ -122,7 +101,6 @@ class Level:
         return deque(path)
 
     def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
-        """Collect all adjacent walkable cells around a given coordinate."""
         result = []
         for d in [DOWN, LEFT, RIGHT, UP]:
             if self.can_move(a, a + d):
@@ -130,17 +108,14 @@ class Level:
         return result
 
     def _is_walkable(self, point: Vector2) -> bool:
-        """Check whether a world coordinate sits on an open maze cell."""
         return (0 <= point.x < self.width and
                 0 <= point.y < self.height and
                 self.maze[int(point.y)][int(point.x)] != 15)
 
     def _is_reachable(self, point: Vector2) -> bool:
-        """Alias for walkability used by path and placement logic."""
         return self._is_walkable(point)
 
     def _nearest_walkable(self, point: Vector2) -> Vector2:
-        """Find the nearest open cell to a coordinate, if one exists."""
         if self._is_walkable(point):
             return point
 
@@ -164,7 +139,6 @@ class Level:
         return Vector2(start[0], start[1])
 
     def _layout(self) -> None:
-        """Populate pellets, energizers, ghost starts, and player start."""
         corners = [
             Vector2(0, 0),
             Vector2(self.width - 1, 0),
@@ -186,22 +160,11 @@ class Level:
                 self._pellets.add(cell)
 
     def can_move(self, a: Vector2, b: Vector2) -> bool:
-        """Check whether a movement from one coordinate to another is legal.
-
-        Args:
-            a (Vector2): The starting position.
-            b (Vector2): The target position.
-
-        Returns:
-            bool: True when no wall blocks the move.
-        """
         a_x = round(a.x)
         a_y = round(a.y)
         b_x = round(b.x)
         b_y = round(b.y)
 
-        # Out of range coordinates would otherwise wrap around via
-        # negative list indices (or raise IndexError).
         if not (0 <= a_x < self.width and 0 <= a_y < self.height and
                 0 <= b_x < self.width and 0 <= b_y < self.height):
             return False

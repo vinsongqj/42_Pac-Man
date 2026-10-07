@@ -1,13 +1,6 @@
-"""Entity and AI logic for the player and the chasing ghosts.
-
-The game loop updates entity positions, input, and ghost targeting so that the
-maze and collisions stay synchronized with rendering and scene logic.
-"""
-
 from abc import ABC, abstractmethod
 import random
-from typing import TYPE_CHECKING, Optional
-
+from typing import Any, Optional
 import src.client.constants as c
 from src.client.vector2 import Vector2
 from src.client.level import Level
@@ -17,7 +10,6 @@ THRESHOLD = 0.05
 
 
 class Entity(ABC):
-    """Base entity with shared movement, direction, and position behavior."""
 
     def __init__(self, pos: Vector2) -> None:
         self._pos: Vector2 = pos
@@ -26,6 +18,7 @@ class Entity(ABC):
         self._last_move: Vector2 = Vector2(0, 0)
 
     @property
+    @abstractmethod
     def speed(self) -> float:
         ...
 
@@ -71,12 +64,10 @@ class Entity(ABC):
         return Vector2(round(self.pos.x), round(self.pos.y))
 
     def at_home(self) -> bool:
-        """Return whether the entity is within tolerance of its home tile."""
         tolerance = max(THRESHOLD, self.speed / c.FPS)
         return self.pos.distance_to(self.home) < tolerance
 
     def move(self) -> None:
-        """Advance the entity one frame along its current movement vector."""
         if self.direction.x != 0:
             self.pos = Vector2(self.pos.x, round(self.pos.y))
         if self.direction.y != 0:
@@ -85,18 +76,15 @@ class Entity(ABC):
         self.last_move = self.direction
 
     def _is_aligned(self) -> bool:
-        """Check whether the entity is snapped to the center of a cell."""
         half_step = self.speed / c.FPS / 2
         return self.pos.distance_to(self.pos.round()) < max(half_step, 1e-3)
 
     @abstractmethod
-    def tick(self, *args: object, **kwargs: object) -> Optional[Vector2]:
-        """Advance the entity by one game tick."""
+    def tick(self, *args: Any, **kwargs: Any) -> Optional[Vector2]:
         ...
 
 
 class Player(Entity):
-    """The controllable pac-man character and the player’s live state."""
 
     def __init__(self, pos: Vector2) -> None:
         super().__init__(pos)
@@ -113,11 +101,9 @@ class Player(Entity):
         return self._energizer_timer
 
     def energize(self) -> None:
-        """Activate Pac-Man's energizer state for the configured duration."""
-        self._energizer_timer = c.ENERGIZER_TIME * c.FPS
+        self._energizer_timer = int(c.ENERGIZER_TIME * c.FPS)
 
     def increase_ghosts_eaten(self) -> None:
-        """Increase the kill streak and award a life every eighth ghost."""
         self._ghosts_eaten += 1
         if self._ghosts_eaten % 8 == 0:
             self.increase_remaining_lives()
@@ -134,45 +120,42 @@ class Player(Entity):
             return self._is_invincible
 
     def toggle_invincibility(self) -> None:
-        """Flip the player's invincibility state for debugging or cheat use."""
         self._is_invincible = not self._is_invincible
 
     @property
     def speed(self) -> float:
-        if self.is_energized: return c.PLAYER_ENERGIZED_SPEED
-        else: return c.PLAYER_SPEED
+        if self.is_energized:
+            return c.PLAYER_ENERGIZED_SPEED
+        else:
+            return c.PLAYER_SPEED
 
     @property
     def remaining_lives(self) -> int:
         return self._remaining_lives
 
     def decrease_remaining_lives(self) -> None:
-        """Remove one life from the player after a collision or timeout."""
         self._remaining_lives -= 1
 
     def increase_remaining_lives(self) -> None:
-        """Award the player an extra life."""
         self._remaining_lives += 1
 
     def teleport_home(self) -> None:
-        """Reset the player to their spawn point after a death."""
         self._pos = self.home
         self._time_since_last_death = 0
         self.direction = Vector2(0, 0)
 
     def set_input_direction(self, direction: Vector2) -> None:
-        """Queue the next movement direction selected by the player."""
         self.pending_direction = direction
 
     def tick(self, level: Level) -> Optional[Vector2]:
-        """Advance the player using the current maze and input state."""
-        if self.is_energized: self._energizer_timer -= 1
+        if self.is_energized:
+            self._energizer_timer -= 1
         self._time_since_last_death += 1
 
         new_cell: Optional[Vector2] = None
 
-        if (not self.pending_direction.is_zero
-            and self.pending_direction == -self.direction):
+        if (not self.pending_direction.is_zero and
+                self.pending_direction == -self.direction):
             self.direction = self.pending_direction
 
         if self._is_aligned():
@@ -200,7 +183,6 @@ class Player(Entity):
 
 
 class Ghost(Entity, ABC):
-    """Abstract ghost AI base class shared by each ghost personality."""
 
     def __init__(self, name: str, pos: Vector2) -> None:
         super().__init__(pos)
@@ -225,16 +207,16 @@ class Ghost(Entity, ABC):
 
     @property
     def speed(self) -> float:
-        if self.is_eaten: return c.GHOST_EATEN_SPEED
-        else: return c.GHOST_SPEED
+        if self.is_eaten:
+            return c.GHOST_EATEN_SPEED
+        else:
+            return c.GHOST_SPEED
 
     @abstractmethod
     def _get_target_pos(self, player: Player) -> Vector2:
-        """Return the ghost's target cell for the current AI behavior."""
         ...
 
-    def _get_directions(self, level: "Level") -> list[Vector2]:
-        """List every legal movement direction from the ghost's current cell."""
+    def _get_directions(self, level: Level) -> list[Vector2]:
         d = [c.UP, c.DOWN, c.RIGHT, c.LEFT]
         if not self.is_eaten and not self.direction.is_zero:
             d.remove(-self.direction)
@@ -244,20 +226,18 @@ class Ghost(Entity, ABC):
         else:
             return [-self.direction]
 
-    def _get_distanation(self, level: Level, player: Player) -> Vector2:
-        """Resolve the next destination cell along the ghost's current path."""
+    def _get_destination(self, level: Level, player: Player) -> Vector2:
         if self.is_eaten:
-            distanation = self.home
+            destination = self.home
         else:
-            distanation = self._get_target_pos(player)
-        path = level.bfs(self.pos, distanation)
+            destination = self._get_target_pos(player)
+        path = level.bfs(self.pos, destination)
         if path:
             return path.popleft()
         else:
-            return distanation
+            return destination
 
     def tick(self, level: Level, player: Player) -> None:
-        """Advance the ghost along its AI path or revive state."""
         if self.is_eaten and self.at_home():
             self._reviving_timer -= 1
             self._pos = self._pos.round()
@@ -267,7 +247,7 @@ class Ghost(Entity, ABC):
 
             if self._is_aligned():
                 if any(d != self.direction for d in dirs):
-                    tarpos = self._get_distanation(level, player)
+                    tarpos = self._get_destination(level, player)
 
                     best_distance = 99999999.0
                     best_direction = Vector2(0, 0)
@@ -294,8 +274,7 @@ class Blinky(Ghost):
     def __init__(self, pos: Vector2) -> None:
         super().__init__("red", pos)
 
-    def _get_target_pos(self, player) -> Vector2:
-        """Hunt directly toward the player's current position."""
+    def _get_target_pos(self, player: Player) -> Vector2:
         return player.pos
 
 
@@ -303,8 +282,7 @@ class Pinky(Ghost):
     def __init__(self, pos: Vector2) -> None:
         super().__init__("pink", pos)
 
-    def _get_target_pos(self, player) -> Vector2:
-        """Aim four tiles ahead of the player's current heading."""
+    def _get_target_pos(self, player: Player) -> Vector2:
         return player.pos + player.direction * 4
 
 
@@ -312,9 +290,7 @@ class Inky(Ghost):
     def __init__(self, pos: Vector2) -> None:
         super().__init__("cyan", pos)
 
-    def _get_target_pos(self, player) -> Vector2:
-        """Track the player's position for now as a simple ambush target."""
-        #return 2 * game.ghosts[0].pos - (player.pos + player.direction * 2)
+    def _get_target_pos(self, player: Player) -> Vector2:
         return player.pos
 
 
@@ -322,8 +298,7 @@ class Clyde(Ghost):
     def __init__(self, pos: Vector2) -> None:
         super().__init__("yellow", pos)
 
-    def _get_target_pos(self, player) -> Vector2:
-        """Retreat to home when the player gets close enough."""
+    def _get_target_pos(self, player: Player) -> Vector2:
         if player.pos.distance_to(self.pos) > 8:
             return player.pos
         else:

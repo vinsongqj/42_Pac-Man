@@ -1,9 +1,3 @@
-"""Configuration loader and validator for the Pac-Man client.
-
-The game reads a JSON config file, strips comments, validates each field, and
-applies the values onto the runtime constants used by the client.
-"""
-
 from __future__ import annotations
 import difflib
 import json
@@ -54,13 +48,7 @@ class Config:
         c.CHEATS_ENABLED = self.cheats
 
 
-# --- comments -----------------------------------------------------------
-
 def strip_comments(text: str) -> str:
-    """Remove // # and /* */ comments, but never inside a JSON string.
-
-    Newlines are preserved so line numbers in JSON errors still match the
-    original file."""
     out: list[str] = []
     i, n = 0, len(text)
     in_string = False
@@ -99,9 +87,7 @@ def strip_comments(text: str) -> str:
 # --- reading + parsing --------------------------------------------------
 
 def _read(path: str) -> str:
-    """Read the configuration file as UTF-8 text, including BOM-safe input."""
     try:
-        # utf-8-sig also accepts files saved with a BOM (Windows editors).
         return Path(path).read_text(encoding="utf-8-sig")
     except FileNotFoundError:
         raise ConfigError(f"config file not found: {path}") from None
@@ -116,17 +102,6 @@ def _read(path: str) -> str:
 
 
 def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    """Reject duplicate JSON keys while building the object.
-
-    Args:
-        pairs (list[tuple[str, Any]]): The raw key-value pairs from JSON.
-
-    Returns:
-        dict[str, Any]: A dict without duplicate keys.
-
-    Raises:
-        ConfigError: If a duplicate key is encountered.
-    """
     result: dict[str, Any] = {}
     for key, value in pairs:
         if key in result:
@@ -136,19 +111,10 @@ def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def _bad_constant(name: str) -> Any:
-    """Reject JSON constants such as NaN and Infinity."""
     raise ConfigError(f"{name} is not allowed, use a regular number")
 
 
 def _type_name(value: Any) -> str:
-    """Return a readable label for a Python value.
-
-    Args:
-        value (Any): The value whose JSON type should be described.
-
-    Returns:
-        str: A user-friendly type label.
-    """
     if value is None:
         return "null"
     if isinstance(value, bool):
@@ -163,18 +129,6 @@ def _type_name(value: Any) -> str:
 
 
 def _parse_json(path: str, text: str) -> Any:
-    """Parse JSON text after comment stripping and validation.
-
-    Args:
-        path (str): The config file path.
-        text (str): The raw file contents.
-
-    Returns:
-        Any: The parsed JSON value.
-
-    Raises:
-        ConfigError: If parsing fails or the file is malformed.
-    """
     try:
         cleaned = strip_comments(text)
         if not cleaned.strip():
@@ -201,18 +155,6 @@ def _parse_json(path: str, text: str) -> Any:
 
 def _check_int(value: Any, label: str, lo: int, hi: int,
                errors: list[str]) -> Optional[int]:
-    """Validate an integer-like config value against bounds.
-
-    Args:
-        value (Any): The raw value from the config.
-        label (str): The user-facing field name.
-        lo (int): Minimum allowed value.
-        hi (int): Maximum allowed value.
-        errors (list[str]): Accumulated validation errors.
-
-    Returns:
-        Optional[int]: The validated integer, or None if invalid.
-    """
     if isinstance(value, float):
         errors.append(f"{label}: expected a whole number, got {value}")
         return None
@@ -223,12 +165,11 @@ def _check_int(value: Any, label: str, lo: int, hi: int,
     if not lo <= value <= hi:
         errors.append(f"{label}: must be between {lo} and {hi}, got {value}")
         return None
-    return value
+    return int(value)
 
 
 def _int_key(data: dict[str, Any], key: str, default: int, lo: int, hi: int,
              errors: list[str]) -> int:
-    """Read and validate an integer config key with a fallback default."""
     if key not in data:
         return default
     value = _check_int(data[key], f"'{key}'", lo, hi, errors)
@@ -236,24 +177,12 @@ def _int_key(data: dict[str, Any], key: str, default: int, lo: int, hi: int,
 
 
 def _levels(data: dict[str, Any], errors: list[str]) -> int:
-    """Number of levels to clear."""
     return _int_key(data, "levels", c.MAX_LEVELS, 1, MAX_LEVELS_ALLOWED,
                     errors)
 
 
 def _bool_key(data: dict[str, Any], key: str, default: bool,
               errors: list[str]) -> bool:
-    """Read and validate a boolean config key.
-
-    Args:
-        data (dict[str, Any]): Parsed config data.
-        key (str): The expected key name.
-        default (bool): Default value when the field is absent.
-        errors (list[str]): Error accumulation list.
-
-    Returns:
-        bool: The validated boolean value.
-    """
     if key not in data:
         return default
     value = data[key]
@@ -265,18 +194,6 @@ def _bool_key(data: dict[str, Any], key: str, default: bool,
 
 
 def _build(data: dict[str, Any], path: str) -> Config:
-    """Build a validated Config object from parsed input data.
-
-    Args:
-        data (dict[str, Any]): The parsed JSON object.
-        path (str): The source file path used for warning messages.
-
-    Returns:
-        Config: The validated configuration object.
-
-    Raises:
-        ConfigError: If required values are invalid.
-    """
     for key in data:
         if key not in KNOWN_KEYS:
             hint = difflib.get_close_matches(key, KNOWN_KEYS, n=1)
@@ -306,20 +223,7 @@ def _build(data: dict[str, Any], path: str) -> Config:
     return config
 
 
-# --- public entry points ------------------------------------------------
-
 def load_config(path: str) -> Config:
-    """Load and validate the Pac-Man client configuration file.
-
-    Args:
-        path (str): Path to the config JSON file.
-
-    Returns:
-        Config: The validated configuration values.
-
-    Raises:
-        ConfigError: If the file cannot be read or is invalid.
-    """
     data = _parse_json(path, _read(path))
     if not isinstance(data, dict):
         raise ConfigError(f"{path}: the top level must be a JSON object "

@@ -1,24 +1,17 @@
-"""Pac-Man desktop entry point.
-
-Runs the client, loads configuration, and manages the scene loop.
-"""
-
 import sys
 from pathlib import Path
 import pygame
 import src.client.audio as audio
 import src.client.constants as c
 from src.client import config_parser
-from src.client.scene_utils import SceneState, SceneManager
 from src.client.scenes import (
+    SceneState, SceneManager,
     MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
     JumpscareScene,
-    MENU_WIDTH, MENU_HEIGHT,
 )
 
-# Resolve base path for PyInstaller or raw execution
 if getattr(sys, "frozen", False):
-    BASE_DIR = Path(sys._MEIPASS)
+    BASE_DIR = Path(getattr(sys, "_MEIPASS", "."))
 else:
     BASE_DIR = Path(__file__).resolve().parent
 
@@ -29,17 +22,13 @@ if str(BASE_DIR) not in sys.path:
 
 
 def main() -> None:
-    """
-    Start the game, load the active config, and run the main loop.
-    """
-    # 1. CLI Argument provided: use the specified config path
     if len(sys.argv) == 2:
         config_path = Path(sys.argv[1])
         if config_path.suffix.lower() != ".json":
             print(f"Error: '{config_path}' is not a .json file",
                   file=sys.stderr)
             sys.exit(1)
-    # 2. No CLI Argument (e.g., PyInstaller double-click): fallback to config
+
     elif len(sys.argv) == 1:
         config_path = BASE_DIR / "config.json"
     else:
@@ -60,7 +49,7 @@ def main() -> None:
     pygame.mixer.pre_init(44100, -16, 2, 2048)
     pygame.init()
     audio.load_all()
-    pygame.display.set_mode((MENU_WIDTH, MENU_HEIGHT),
+    pygame.display.set_mode((c.WIDTH, c.HEIGHT),
                             pygame.RESIZABLE | pygame.SCALED)
     pygame.display.set_caption("42 Pac-Man")
 
