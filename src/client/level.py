@@ -17,6 +17,7 @@ class LevelGenerator:
         self._generator = MazeGenerator(size=size, perfect=False, seed=42)
 
     def generate(self, seed: int = 42) -> 'Level':
+        """Generate and return a level built from the configured maze seed."""
         self._generator = MazeGenerator(size=self._size, perfect=False,
                                         seed=seed)
         self._generator.generate(seed)
@@ -67,10 +68,14 @@ class Level:
         return self._ghost_starts
 
     def bfs(self, a: Vector2, b: Vector2) -> deque[Vector2] | None:
-        """Shortest path from a to b (excluding a, including b).
+        """Find the shortest path from one cell to another.
 
-        Returns None if b is off the map, is a wall, or is unreachable,
-        and an empty deque if a and b are the same cell.
+        Args:
+            a (Vector2): The starting point.
+            b (Vector2): The destination cell.
+
+        Returns:
+            deque[Vector2] | None: A path from a to b, or None if unreachable.
         """
         a, b = a.round(), b.round()
         if not self._is_walkable(b) or not self._is_walkable(a):
@@ -117,6 +122,7 @@ class Level:
         return deque(path)
 
     def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
+        """Collect all adjacent walkable cells around a given coordinate."""
         result = []
         for d in [DOWN, LEFT, RIGHT, UP]:
             if self.can_move(a, a + d):
@@ -124,14 +130,17 @@ class Level:
         return result
 
     def _is_walkable(self, point: Vector2) -> bool:
+        """Check whether a world coordinate sits on an open maze cell."""
         return (0 <= point.x < self.width and
                 0 <= point.y < self.height and
                 self.maze[int(point.y)][int(point.x)] != 15)
 
     def _is_reachable(self, point: Vector2) -> bool:
+        """Alias for walkability used by path and placement logic."""
         return self._is_walkable(point)
 
     def _nearest_walkable(self, point: Vector2) -> Vector2:
+        """Find the nearest open cell to a coordinate, if one exists."""
         if self._is_walkable(point):
             return point
 
@@ -155,6 +164,7 @@ class Level:
         return Vector2(start[0], start[1])
 
     def _layout(self) -> None:
+        """Populate pellets, energizers, ghost starts, and player start."""
         corners = [
             Vector2(0, 0),
             Vector2(self.width - 1, 0),
@@ -176,9 +186,14 @@ class Level:
                 self._pellets.add(cell)
 
     def can_move(self, a: Vector2, b: Vector2) -> bool:
-        """
-        Checks if A->B doesn't collide with any walls.
-        Works only if A and B are in two neighbouring cells or in the same cell
+        """Check whether a movement from one coordinate to another is legal.
+
+        Args:
+            a (Vector2): The starting position.
+            b (Vector2): The target position.
+
+        Returns:
+            bool: True when no wall blocks the move.
         """
         a_x = round(a.x)
         a_y = round(a.y)

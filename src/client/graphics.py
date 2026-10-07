@@ -30,9 +30,11 @@ class Graphics:
         return (self.screen_size[1] - maze_pixel_height) // 2
 
     def on_new_level(self) -> None:
+        """Refresh the sprite objects after the level layout changes."""
         self._spawn_sprites()
 
     def _spawn_sprites(self) -> None:
+        """Create fresh player and ghost sprite objects for the current level."""
         offset = (self.offset_x, self.offset_y)
         player_pos = self.game.player.pos
         self.player_sprite = PlayerSprite(
@@ -46,10 +48,17 @@ class Graphics:
         ]
 
     def set_ghost_direction(self, index: int, direction: str) -> None:
+        """Set the direction of one ghost sprite.
+
+        Args:
+            index (int): The ghost sprite index.
+            direction (str): The direction to assign.
+        """
         if 0 <= index < len(self.ghost_sprites):
             self.ghost_sprites[index].set_direction(direction)
 
     def update(self) -> None:
+        """Synchronize sprite positions and states with the current game state."""
         self.player_sprite.sync(self.game.player.pos,
                                 self.game.player.last_move)
         self.player_sprite.update()
@@ -72,6 +81,7 @@ class Graphics:
         return self._wall_surface
 
     def _ghost_state(self, ghost: Ghost) -> str:
+        """Map a ghost to the correct sprite state for the current game phase."""
         if ghost.is_eaten:
             return "eaten"
         if self.game.frightened:
@@ -81,6 +91,7 @@ class Graphics:
         return "normal"
 
     def draw(self, screen: "pygame.Surface") -> None:
+        """Render the base maze, pellets, ghosts, and player to the screen."""
         screen.blit(self._get_wall_surface(), (0, 0))
         self._draw_pellets(screen)
         for ghost_sprite in self.ghost_sprites:
@@ -88,11 +99,13 @@ class Graphics:
         self.player_sprite.draw(screen)
 
     def _cell_center(self, x: int, y: int) -> tuple[int, int]:
+        """Return the pixel center for a maze cell coordinate."""
         return (
             self.offset_x + c.MARGIN + x * c.CELL + c.CELL // 2,
             self.offset_y + c.MARGIN + y * c.CELL + c.CELL // 2)
 
     def _draw_walls(self, screen: "pygame.Surface") -> None:
+        """Render the maze wall geometry for the current level onto the canvas."""
         maze = self.game.level.maze
         for y in range(self.game.level.height):
             for x in range(self.game.level.width):
@@ -125,6 +138,7 @@ class Graphics:
                                      c.WALL_WIDTH)
 
     def _draw_pellets(self, screen: "pygame.Surface") -> None:
+        """Render every remaining pellet and energizer on the maze."""
         for pos in self.game.level.pellets:
             pygame.draw.circle(screen,
                                c.DOT_COLOR,

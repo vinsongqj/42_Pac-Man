@@ -30,19 +30,47 @@ class Scene:
     """Base interface for all screens and overlays in the game."""
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Run setup logic when a scene becomes active.
+
+        Args:
+            **kwargs: Optional scene-specific arguments.
+        """
         pass
 
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
+        """Handle an input event for this scene.
+
+        Args:
+            event (pygame.event.Event): The pygame event to handle.
+
+        Returns:
+            SceneResult: An optional next state or state/kwargs tuple.
+        """
         return None
 
     def update(self) -> SceneResult:
+        """Advance the scene logic for a single frame.
+
+        Returns:
+            SceneResult: An optional transition request for the scene manager.
+        """
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the scene onto the target surface.
+
+        Args:
+            surface (pygame.Surface): The display surface to draw to.
+        """
         raise NotImplementedError
 
     def screen_size(self) -> tuple[int, int]:
+        """Report the scene's required screen dimensions.
+
+        Returns:
+            tuple[int, int]: Width and height in pixels.
+        """
         raise NotImplementedError
 
 
@@ -58,6 +86,12 @@ class SceneManager:
         self.current_screen.on_enter()
 
     def switch_to(self, state: SceneState, **kwargs: Any) -> None:
+        """Activate a different scene and pass optional state data.
+
+        Args:
+            state (SceneState): The scene to switch to.
+            **kwargs: Scene initialization data.
+        """
         self.current_state = state
         if state == SceneState.QUIT:
             return
@@ -65,6 +99,7 @@ class SceneManager:
         self.current_screen.on_enter(**kwargs)
 
     def _apply(self, result: SceneResult) -> None:
+        """Apply the result of a scene update or event callback."""
         if result is None:
             return
         if isinstance(result, tuple):
@@ -74,10 +109,21 @@ class SceneManager:
         self.switch_to(state, **kwargs)
 
     def handle_event(self, event: "pygame.event.Event") -> None:
+        """Route an input event to the current scene.
+
+        Args:
+            event (pygame.event.Event): The pygame event to process.
+        """
         self._apply(self.current_screen.handle_event(event))
 
     def update(self) -> None:
+        """Advance the active scene by one game tick."""
         self._apply(self.current_screen.update())
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the current scene onto the provided surface.
+
+        Args:
+            surface (pygame.Surface): The display surface to draw to.
+        """
         self.current_screen.draw(surface)

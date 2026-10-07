@@ -20,6 +20,7 @@ class GameState:
                  allow_cheats: bool = False) -> None:
         self._allow_cheats = allow_cheats
         self._frightened_playing = False
+        self._timer = c.FPS * c.LEVEL_TIME_LIMIT
         self._ghosts_freezed = False
         self._time_frozen = False
         self._ticks: int = 0
@@ -47,16 +48,20 @@ class GameState:
         return self.player.is_invincible
 
     def toggle_player_invincibility(self):
+        """Toggle invincibility for the player when cheat mode is enabled."""
         self._player.toggle_invincibility()
 
     def ghosts_freeze(self):
+        """Freeze all ghosts when cheat mode allows it."""
         self._ghosts_freezed = self.allow_cheats
 
     def ghosts_unfreeze(self):
+        """Unfreeze ghosts if cheat mode is active."""
         if self._allow_cheats:
             self._ghosts_freezed = False
 
     def add_player_life(self):
+        """Grant the player an extra life inside cheat mode."""
         if self._allow_cheats:
             self.player.increase_remaining_lives()
 
@@ -65,12 +70,18 @@ class GameState:
         return self._time_frozen
 
     def freeze_time(self) -> None:
+        """Pause the level timer when cheat mode is enabled."""
         if self._allow_cheats:
             self._time_frozen = True
 
     def unfreeze_time(self) -> None:
+        """Resume the level timer when cheat mode is enabled."""
         if self._allow_cheats:
             self._time_frozen = False
+
+    @property
+    def timer(self) -> int:
+        return int(self._timer // c.FPS)
 
     @property
     def ghosts_freezed(self):
@@ -101,12 +112,6 @@ class GameState:
         return int(c.LEVEL_TIME_LIMIT * c.FPS)
 
     @property
-    def time_left_seconds(self) -> int:
-        """Whole seconds left on this level (rounded up), for the HUD."""
-        left = max(0, self.time_limit_ticks - self._ticks)
-        return math.ceil(left / c.FPS)
-
-    @property
     def gameover(self) -> bool:
         return self._gameover
 
@@ -119,6 +124,8 @@ class GameState:
         return self._player
 
     def _next_level(self) -> None:
+        """Advance to the next level and rebuild the surrounding game state."""
+        self._timer = c.FPS * c.LEVEL_TIME_LIMIT
         self._level_number += 1
         self._level_start_score = self.score
         self._reset_level()
@@ -134,7 +141,7 @@ class GameState:
             self._next_level()
 
     def restart_current_level(self) -> None:
-        # Restarting must not keep points earned in the abandoned attempt.
+        """Restart the current level without preserving the abandoned score."""
         self.score = self._level_start_score
         self._reset_level()
 
@@ -150,6 +157,8 @@ class GameState:
             audio.stop_music_if("frightened")
 
     def _reset_level(self) -> None:
+        """Rebuild the level and reinitialize actors for the current round."""
+        self._timer = c.FPS * c.LEVEL_TIME_LIMIT
         self._stop_frightened_audio(resume_game_music=True)
         self._ticks = 0
         self.level = self.generator.generate(c.FIXED_FIRST_SEED +
@@ -165,11 +174,12 @@ class GameState:
         self.eaten_power_pellets = set()
 
     def tick(self) -> None:
+        """Advance the game state by one simulation tick and resolve interactions."""
         if (self.paused or self._gameover):
             return
 
-        # The frightened track plays for as long as the player is energized;
-        # when that ends the gameplay track carries on.
+        self._timer -= 1
+
         if self._frightened_playing and not self.frightened:
             self._stop_frightened_audio(resume_game_music=True)
 
@@ -193,9 +203,11 @@ class GameState:
             if not g.is_eaten and math.dist(g.pos, self.player.pos) < 0.25:
                 if self.frightened:
                     g.is_eaten = True
+                    self.player.increase_ghosts_eaten()
                     audio.play("eat_ghost")
                     self.score += c.SCORE_GHOST * 2 ** self._ghost_combo
                     self._ghost_combo += 1
+                    self._timer += 3 * c.FPS
                 elif not self.player_invincible:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
@@ -222,6 +234,7 @@ class GameState:
             self._player.energize()
 
     def _tick_entities(self) -> None:
+        """Update the player and ghosts for the current frame."""
         self.player.tick(self.level)
         if not self._ghosts_freezed:
             for ghost in self.ghosts:

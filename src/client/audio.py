@@ -91,21 +91,28 @@ def play_music(name: str) -> None:
 
 
 def stop_music() -> None:
+    """Stop the currently playing background music."""
     global _current_music
     pygame.mixer.music.stop()
     _current_music = None
 
 
 def stop_music_if(name: str) -> None:
-    """Stop the background track only if it is `name`, so a stop request
-    for the frightened track never cuts the menu or game-over music."""
+    """Stop the background track only if it matches the requested name.
+
+    Args:
+        name (str): The music track to stop.
+    """
     if _current_music == name:
         stop_music()
 
 
 def play_loop(name: str) -> None:
-    """Start an sfx looping. No-op if it's already playing, so grabbing a
-    second power pellet mid-frightened doesn't layer it."""
+    """Start a looping sound effect if it is not already active.
+
+    Args:
+        name (str): The sound effect name.
+    """
     sounds = _sounds.get(name)
     if not sounds:
         return
@@ -116,6 +123,10 @@ def play_loop(name: str) -> None:
 
 
 def stop(name: str) -> None:
-    """Stops the sound."""
+    """Stop every active instance of a named sound effect.
+
+    Args:
+        name (str): The sound effect name.
+    """
     for snd in _sounds.get(name, []):
         snd.stop()

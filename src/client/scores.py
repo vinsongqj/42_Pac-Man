@@ -36,6 +36,7 @@ TIMEOUT_SECONDS = 60.0
 
 
 def _ssl_context() -> Optional[ssl.SSLContext]:
+    """Build a permissive SSL context for local development endpoints."""
     host = urllib.parse.urlparse(BASE_URL).hostname
     if host in ("localhost", "127.0.0.1"):
         ctx = ssl.create_default_context()
@@ -46,10 +47,12 @@ def _ssl_context() -> Optional[ssl.SSLContext]:
 
 
 def _log(msg: str) -> None:
+    """Emit a timestamp-free score API log line to stderr."""
     print(f"[scores] {msg}", file=sys.stderr, flush=True)
 
 
 def _request(method: str, path: str, params: dict[str, Any]) -> Any:
+    """Perform a leaderboard API request and decode the JSON response."""
     url = f"{BASE_URL}{path}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, method=method)
     with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS,
@@ -82,6 +85,7 @@ class ScoreBoard:
             return max((e["bestScore"] for e in self._entries), default=0)
 
     def refresh(self) -> None:
+        """Refresh the leaderboard data in a background worker if needed."""
         with self._lock:
             if self._fetching:
                 return
@@ -91,11 +95,13 @@ class ScoreBoard:
         threading.Thread(target=self._fetch, daemon=True).start()
 
     def _set_status(self, status: str) -> None:
+        """Update the online/offline status and invalidate cached render state."""
         if status != self.status:
             self.status = status
             self.version += 1
 
     def submit(self, name: str, score: int) -> None:
+        """Queue a score submission for a completed game if cheat mode is off."""
         if c.CHEATS_ENABLED:
             _log("cheat mode is on: score not submitted")
             return
@@ -107,6 +113,7 @@ class ScoreBoard:
                          daemon=True).start()
 
     def _fetch(self) -> None:
+        """Retrieve the leaderboard from the server in the background thread."""
         try:
             data = _request("GET", "/leaderboard",
                             {"size": LEADERBOARD_SIZE})
@@ -126,6 +133,7 @@ class ScoreBoard:
             self._finish_fetch(entries)
 
     def _finish_fetch(self, entries: Optional[list[dict[str, Any]]]) -> None:
+        """Apply the result of a leaderboard fetch and update status metadata."""
         with self._lock:
             self._fetching = False
             if entries is not None:
@@ -136,6 +144,7 @@ class ScoreBoard:
             self.version += 1
 
     def _send(self, name: str, score: int) -> None:
+        """Send a name and score to the leaderboard API for persistence."""
         try:
             _request("PUT", "/user", {"name": name, "newScore": score})
         except urllib.error.HTTPError as e:

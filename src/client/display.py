@@ -29,6 +29,7 @@ class Layout:
 
     def apply_position(self,
                        pos: CoordinateType) -> None:
+        """Apply a position to the element using the configured anchor."""
         if hasattr(self.rect, self.anchor):
             setattr(self.rect, self.anchor, pos)
         else:
@@ -36,6 +37,7 @@ class Layout:
 
     def update_surface(self,
                        new_surface: pygame.Surface) -> None:
+        """Replace the backing surface and preserve the current screen position."""
         self.image_ref = new_surface
         current_pos: CoordinateType = getattr(self.rect, self.anchor)
         self.rect = self.image_ref.get_rect()
@@ -43,6 +45,7 @@ class Layout:
 
     def render(self,
                target_surface: pygame.Surface) -> None:
+        """Blit the surface onto a target display surface."""
         target_surface.blit(self.image_ref, self.rect)
 
 
@@ -60,6 +63,7 @@ class Element:
         return self.layout.rect
 
     def draw(self, surface: pygame.Surface) -> None:
+        """Render the element on the given target surface."""
         self.layout.render(surface)
 
 
@@ -93,6 +97,7 @@ class Text(Element):
         super().__init__(initial_surface, pos, anchor)
 
     def fade(self) -> None:
+        """Update the text alpha to create a pulsing fade effect."""
         if self.fade_speed is not None:
             current_time: int = pygame.time.get_ticks()
             sine_value: float = math.sin(current_time * self.fade_speed)
@@ -100,6 +105,11 @@ class Text(Element):
             self.layout.image_ref.set_alpha(alpha)
 
     def update_text(self, new_text: str) -> None:
+        """Re-render the displayed text using a new string value.
+
+        Args:
+            new_text (str): The updated text content.
+        """
         self.text_str = new_text
         new_surface: pygame.Surface = self.font.render(
             self.text_str, True, self.color

@@ -51,6 +51,7 @@ class MenuScene(Scene):
     """Main menu with leaderboard, title, and quit confirmation."""
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Prepare the menu screen and rebuild the leaderboard view."""
         audio.play_music("cheat" if c.CHEATS_ENABLED else "menu")
         rect = pygame.Rect(0, 0, MENU_WIDTH, MENU_HEIGHT)
         self.title_text = display.Text(
@@ -177,10 +178,12 @@ class MenuScene(Scene):
             )
 
     def screen_size(self) -> tuple[int, int]:
+        """Return the menu screen dimensions."""
         return MENU_WIDTH, MENU_HEIGHT
 
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
+        """Handle keyboard input for menu selection and quit confirmation."""
         if event.type != pygame.KEYDOWN:
             return None
 
@@ -209,12 +212,14 @@ class MenuScene(Scene):
         return None
 
     def update(self) -> None:
+        """Animate the menu text and refresh the leaderboard if server data changed."""
         self.subtitle_text.fade()
         if self._scores_version != SCOREBOARD.version:
             self._build_scores()
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the menu, leaderboard, and optional quit confirmation overlay."""
         surface.fill("black")
         self.pacman.draw(surface)
         self.title_text.draw(surface)
@@ -282,6 +287,7 @@ class HUD:
 
     def update(self, score: int, level: int, lives: int,
                time_left: int) -> None:
+        """Refresh only the changed HUD values for the current gameplay frame."""
         # Re-rendering text is comparatively slow: only do it on change.
         if score != self._score:
             self._score = score
@@ -299,6 +305,7 @@ class HUD:
             self.time_text.update_text(f"{minutes}:{seconds:02d}")
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the current score, level, timer, hint text, and lives display."""
         self.score_text.draw(surface)
         self.level_text.draw(surface)
         self.time_text.draw(surface)
@@ -317,6 +324,7 @@ class GameScene(Scene):
         self._hud: Optional[HUD] = None
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Create or restore the active game state and HUD for a new play scene."""
         self._caption_level: Optional[int] = None
         existing_game: Optional[GameState] = kwargs.get("game")
         self.game = (existing_game if existing_game is not None
@@ -335,19 +343,23 @@ class GameScene(Scene):
         audio.play_music("frightened" if self.game.frightened else "game")
 
     def _update_hud(self) -> None:
+        """Refresh the HUD text using the current score, timer, and lives."""
         assert self._hud is not None
         self._hud.update(self.game.score, self.game.level_number,
                          self.game.player.remaining_lives,
-                         self.game.time_left_seconds)
+                         self.game.timer)
 
     def screen_size(self) -> tuple[int, int]:
+        """Return the current gameplay screen size."""
         return self.graphics.screen_size
 
     def _game_kwargs(self) -> dict[str, Any]:
+        """Package the active game and graphics objects for scene transitions."""
         return {"game": self.game, "graphics": self.graphics}
 
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
+        """Process keyboard input for movement, pause, and cheat controls."""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 return SceneState.PAUSED, self._game_kwargs()
@@ -378,6 +390,7 @@ class GameScene(Scene):
         return None
 
     def update(self) -> SceneResult:
+        """Advance the world state and transition to the next scene if needed."""
         self.game.tick()
         self.graphics.update()
         self._update_hud()
@@ -402,6 +415,7 @@ class GameScene(Scene):
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the maze, actors, and HUD to the requested surface."""
         self.graphics.draw(surface)
         if self._hud is not None:
             self._hud.draw(surface)
@@ -412,6 +426,7 @@ class JumpscareScene(Scene):
     game over screen. Input is ignored while it plays."""
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Prepare the death-screen shock sequence and capture the current game state."""
         self.game = kwargs.get("game")
         self.graphics = kwargs.get("graphics")
         ghost_name: Optional[str] = kwargs.get("ghost_name")
@@ -427,15 +442,18 @@ class JumpscareScene(Scene):
         self._started = pygame.time.get_ticks()
 
     def screen_size(self) -> tuple[int, int]:
+        """Return the full-screen size used by the jumpscare overlay."""
         return MENU_WIDTH, MENU_HEIGHT
 
     def update(self) -> SceneResult:
+        """Wait for the jumpscare timer to finish before continuing to game over."""
         if pygame.time.get_ticks() - self._started >= JUMPSCARE_MS:
             return SceneState.GAME_OVER, {"game": self.game,
                                           "graphics": self.graphics}
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the flash image with a brief shake effect."""
         surface.fill((0, 0, 0))
         if self._image is None:
             return
@@ -493,15 +511,19 @@ class OverlayMenuScene(Scene):
 
     # ----- to be customised by subclasses -----
     def info_lines(self) -> list[InfoLine]:
+        """Return custom text lines that appear beneath the screen title."""
         return []
 
     def wants_name_entry(self) -> bool:
+        """Return whether this overlay expects a player name before continuing."""
         return False
 
     def options(self) -> list[MenuOption]:
+        """Return the menu actions available for this overlay."""
         raise NotImplementedError
 
     def on_escape(self) -> SceneResult:
+        """Handle the Escape key press for the overlay menu."""
         return None
 
     def draw_behind_dim(self, surface: "pygame.Surface") -> None:
@@ -516,9 +538,11 @@ class OverlayMenuScene(Scene):
 
     # ----- helpers -----
     def _game_kwargs(self) -> dict[str, Any]:
+        """Package the active game and graphics objects for menu actions."""
         return {"game": self.game, "graphics": self.graphics}
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Build the overlay layout, name prompt, and action list for a scene."""
         self.game = kwargs.get("game")
         self.graphics = kwargs.get("graphics")
         self.selected = 0
@@ -586,11 +610,13 @@ class OverlayMenuScene(Scene):
             hint_pos, anchor="center")
 
     def screen_size(self) -> tuple[int, int]:
+        """Return the panel size used by all overlay menus."""
         return MENU_WIDTH, MENU_HEIGHT
 
     # ----- name entry -----
     def _finish_name_entry(self, message: str,
                            color: display.ColorType) -> None:
+        """Close the name-entry flow and show a status message instead."""
         self._entering_name = False
         self.prompt_text = None
         self.name_text = None
@@ -600,6 +626,7 @@ class OverlayMenuScene(Scene):
             (MENU_WIDTH // 2, self._name_box.centery), anchor="center")
 
     def _submit_name(self) -> None:
+        """Submit the player's chosen name to the leaderboard if valid."""
         name = self._name.strip()
         if self.game is None:
             return
@@ -614,6 +641,7 @@ class OverlayMenuScene(Scene):
         self._finish_name_entry("SCORE SUBMITTED", c.PLAYER_COLOR)
 
     def _handle_name_key(self, event: "pygame.event.Event") -> None:
+        """Handle character entry for the leaderboard name prompt."""
         if pygame.time.get_ticks() < self._input_ready_at:
             return
         if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
@@ -638,6 +666,7 @@ class OverlayMenuScene(Scene):
     # ----- scene interface -----
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
+        """Handle menu-item navigation or the active name-entry interaction."""
         if event.type != pygame.KEYDOWN:
             return None
         if self._entering_name:
@@ -657,6 +686,7 @@ class OverlayMenuScene(Scene):
         return None
 
     def _draw_name_field(self, surface: "pygame.Surface") -> None:
+        """Render the name-entry prompt and input box on the overlay surface."""
         if self.prompt_text is not None:
             self.prompt_text.draw(surface)
         if self.name_text is None:
@@ -672,6 +702,7 @@ class OverlayMenuScene(Scene):
                              pygame.Rect(x, cy - 16, 3, 32))
 
     def _draw_trail(self, surface: "pygame.Surface") -> None:
+        """Render the scrolling ghost trail down the left and right edges."""
         images = self._trail_images
         if not images:
             return
@@ -693,6 +724,7 @@ class OverlayMenuScene(Scene):
                     y += gap
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render the dimmed game state plus the overlay menu and status text."""
         if self.graphics is not None:
             self.graphics.draw(surface)
         else:
@@ -721,6 +753,7 @@ class PauseScene(OverlayMenuScene):
     title = "PAUSED"
 
     def options(self) -> list[MenuOption]:
+        """Return the pause menu choices."""
         return [
             ("RESUME", self._resume),
             ("RESTART LEVEL", self._restart),
@@ -729,9 +762,11 @@ class PauseScene(OverlayMenuScene):
         ]
 
     def _resume(self) -> SceneResult:
+        """Resume the current game without changing the level state."""
         return SceneState.PLAYING, self._game_kwargs()
 
     def _restart(self) -> SceneResult:
+        """Restart the active level and resume the scene with a fresh board."""
         if self.game is not None and self.graphics is not None:
             self.game.restart_current_level()
             self.game.paused = True  # wait for the first key press
@@ -739,6 +774,7 @@ class PauseScene(OverlayMenuScene):
         return SceneState.PLAYING, self._game_kwargs()
 
     def on_escape(self) -> SceneResult:
+        """Make Escape resume the current game from the pause screen."""
         return self._resume()
 
 
@@ -750,12 +786,15 @@ class ScoreScreen(OverlayMenuScene):
     """
 
     def headline(self) -> str:
+        """Return the summary line shown near the top of the end screen."""
         raise NotImplementedError
 
     def _final_score(self) -> int:
+        """Return the completed run's final score, if available."""
         return self.game.score if self.game is not None else 0
 
     def info_lines(self) -> list[InfoLine]:
+        """Construct the score summary and status text shown on the screen."""
         score = self._final_score()
         best = SCOREBOARD.best
         lines: list[InfoLine] = [
@@ -769,10 +808,12 @@ class ScoreScreen(OverlayMenuScene):
         return lines
 
     def wants_name_entry(self) -> bool:
+        """Ask for a player name only when the run is legal to save."""
         # Cheat runs are never saved, so don't ask for a name.
         return self._final_score() > 0 and not c.CHEATS_ENABLED
 
     def options(self) -> list[MenuOption]:
+        """Return the actions available after a completed run."""
         return [
             # No kwargs -> GameScene.on_enter builds a fresh game
             ("PLAY AGAIN", lambda: (SceneState.PLAYING, {})),
@@ -781,6 +822,7 @@ class ScoreScreen(OverlayMenuScene):
         ]
 
     def on_escape(self) -> SceneResult:
+        """Return to the main menu when Escape is pressed on the end screen."""
         return SceneState.MENU
 
 
@@ -791,14 +833,17 @@ class GameOverScene(ScoreScreen):
     title_color = (255, 0, 0)
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Prepare the game-over screen and start the defeat music."""
         super().on_enter(**kwargs)
         audio.play_music("game_over")
 
     def headline(self) -> str:
+        """Return the last reached level to show on the end screen."""
         level = self.game.level_number if self.game is not None else 1
         return f"Level {level}"
 
     def trail_frames(self) -> list[str]:
+        """Return the ghost trail sprites used on the defeat screen."""
         # The ghosts won: show them scared, fleeing.
         frames = c.GHOST_FRIGHTENED_FRAMES["RIGHT"]
         return [frames[i % len(frames)] for i in range(len(c.GHOST_NAMES))]
@@ -811,14 +856,17 @@ class VictoryScene(ScoreScreen):
     title_color = (255, 255, 255)
 
     def headline(self) -> str:
+        """Return the final clear message for the victory overlay."""
         return f"All {c.MAX_LEVELS} levels cleared"
 
     def trail_frames(self) -> list[str]:
+        """Return the ghost trail sprites used on the victory screen."""
         # The player won: show the ghosts normal and in their own colours.
         return [c.GHOST_SPRITE_FRAMES[name]["RIGHT"][0]
                 for name in c.GHOST_NAMES]
 
     def on_enter(self, **kwargs: Any) -> None:
+        """Set up the victory animation and start the celebration music."""
         super().on_enter(**kwargs)
         audio.play_music("victory")
         self._pacman = display.Image.load_surface(
@@ -833,15 +881,19 @@ class VictoryScene(ScoreScreen):
 
     @staticmethod
     def _intro_ms() -> int:
+        """Return the duration of the victory intro sequence in milliseconds."""
         return VICTORY_RISE_MS + VICTORY_ZOOM_MS + VICTORY_UI_DELAY_MS
 
     def _elapsed(self) -> int:
+        """Return elapsed time since the victory intro began."""
         return pygame.time.get_ticks() - self._anim_start
 
     def _intro_done(self) -> bool:
+        """Return whether the animated victory intro has finished."""
         return self._elapsed() >= self._intro_ms()
 
     def _final_scale(self) -> float:
+        """Return the final scale used for the victory image animation."""
         if VICTORY_ZOOM_SCALE is not None:
             return VICTORY_ZOOM_SCALE
         w, h = self._pacman.get_size()
@@ -860,6 +912,7 @@ class VictoryScene(ScoreScreen):
         return rect.center
 
     def draw_behind_dim(self, surface: "pygame.Surface") -> None:
+        """Draw the animated victory image behind the overlay dimming layer."""
         elapsed = self._elapsed()
         screen_cx, screen_cy = MENU_WIDTH // 2, MENU_HEIGHT // 2
         # pygame rotates counter-clockwise; the setting is clockwise.
@@ -902,11 +955,13 @@ class VictoryScene(ScoreScreen):
 
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
+        """Ignore input until the victory intro completes."""
         if not self._intro_done():
             return None  # intro is unskippable, like the jumpscare
         return super().handle_event(event)
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Render either the intro animation or the final overlay menu."""
         if self._intro_done():
             super().draw(surface)
             return
@@ -926,6 +981,7 @@ _original_game_handle_event = GameScene.handle_event
 
 def _debug_game_handle_event(self: GameScene,
                              event: "pygame.event.Event") -> SceneResult:
+    """Temporarily trigger the victory screen by pressing V in-game."""
     if event.type == pygame.KEYDOWN and event.key == pygame.K_v:
         if self.game.score <= 0:
             self.game.score = _DEBUG_FAKE_SCORE
