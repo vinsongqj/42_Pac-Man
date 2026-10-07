@@ -224,17 +224,25 @@ class Image(Element):
             surface: pygame.Surface = pygame.Surface(size)
             surface.fill((255, 0, 128))
         else:
-            if image_path.lower().endswith(".png"):
-                surface = pygame.image.load(image_path).convert_alpha()
-            else:
-                surface = pygame.image.load(image_path).convert()
-
-            if scale_size is not None:
-                if smooth:
-                    surface = pygame.transform.smoothscale(surface,
-                                                           scale_size)
+            try:
+                if image_path.lower().endswith(".png"):
+                    surface = pygame.image.load(image_path).convert_alpha()
                 else:
-                    surface = pygame.transform.scale(surface, scale_size)
+                    surface = pygame.image.load(image_path).convert()
+
+                if scale_size is not None:
+                    if smooth:
+                        surface = pygame.transform.smoothscale(
+                            surface, scale_size
+                        )
+                    else:
+                        surface = pygame.transform.scale(
+                            surface, scale_size
+                        )
+            except pygame.error:
+                size = scale_size if scale_size is not None else (50, 50)
+                surface = pygame.Surface(size)
+                surface.fill((255, 0, 128))
 
         cls._surface_cache[cache_key] = surface
         return surface

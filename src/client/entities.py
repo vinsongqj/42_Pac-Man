@@ -369,7 +369,9 @@ class Ghost(Entity, ABC):
                     if not dirs:
                         best_direction = Vector2(0, 0)
                     elif player.is_energized and not self.is_eaten:
-                        best_direction = random.choice(dirs)
+                        best_direction = (
+                            random.choice(dirs) if dirs else Vector2(0, 0)
+                        )
                     else:
                         for d in dirs:
                             next_pos = self.pos + d

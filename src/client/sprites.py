@@ -130,6 +130,8 @@ class Sprite(Image):
     def _current_path(self) -> str:
         """Get active path string to frame image."""
         frame_list = self._current_frame_list()
+        if not frame_list:
+            return ""
         return frame_list[self.frame_index % len(frame_list)]
 
     def _refresh_image(self) -> None:
@@ -170,6 +172,8 @@ class Sprite(Image):
             frame_index: Target zero-based integer frame index.
         """
         frame_list = self._current_frame_list()
+        if not frame_list:
+            return
         new_index = frame_index % len(frame_list)
         if new_index != self.frame_index:
             self.frame_index = new_index

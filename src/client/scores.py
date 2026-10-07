@@ -36,9 +36,13 @@ def _request(method: str, path: str, params: dict[str, Any]) -> Any:
     """
     url = f"{BASE_URL}{path}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(url, method=method)
-    with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
-        body = resp.read()
-        return json.loads(body) if body else None
+    try:
+        with urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS) as resp:
+            body = resp.read()
+            return json.loads(body) if body else None
+    except json.JSONDecodeError as e:
+        _log(f"failed to parse response from {path}: {e}")
+        return None
 
 
 class ScoreBoard:
@@ -119,15 +123,20 @@ class ScoreBoard:
         try:
             data = _request("GET", "/leaderboard",
                             {"size": LEADERBOARD_SIZE})
+            if not isinstance(data, list):
+                _log(f"unexpected payload format: {type(data).__name__}")
+                self._finish_fetch(None)
+                return
+
             entries = [
                 {"name": str(e.get("name", "?")),
                  "bestScore": int(e["bestScore"])}
-                for e in (data or [])
+                for e in data if isinstance(e, dict) and "bestScore" in e
             ]
         except urllib.error.HTTPError as e:
             _log(f"GET /leaderboard -> HTTP {e.code}: {e.read()[:300]!r}")
             self._finish_fetch(None)
-        except (OSError, ValueError, AttributeError, TypeError) as e:
+        except (OSError, ValueError, AttributeError, TypeError, KeyError) as e:
             _log(f"GET /leaderboard failed: {e!r}")
             self._finish_fetch(None)
         else:
