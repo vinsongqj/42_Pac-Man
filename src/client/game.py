@@ -12,7 +12,7 @@ class GameState:
     def __init__(self, size: tuple[int, int] = c.MAZE_SIZE,
                  allow_cheats: bool = False) -> None:
         self._allow_cheats = allow_cheats
-        self._frightened_playing = False   # frightened track is the current music
+        self._frightened_playing = False
         self._ghosts_freezed = False
         self._time_frozen = False
         self._ticks: int = 0
