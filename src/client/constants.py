@@ -28,7 +28,7 @@ ENERGIZER_TIME = 15
 
 # Speed
 PLAYER_SPEED = 3.0
-PLAYER_ENERGIZED_SPEED = 4.0
+PLAYER_ENERGIZED_SPEED = 4.5
 GHOST_SPEED = 2.5
 GHOST_EATEN_SPEED = 6.0
 
@@ -123,6 +123,7 @@ MUSIC = {
     "menu": ("assets/audio/menu.ogg", -1),
     "cheat": ("assets/audio/cheat.ogg", -1),
     "victory": ("assets/audio/victory.ogg", -1),
+    "game": ("assets/audio/Rotterdam.ogg", -1),
     "frightened": ("assets/audio/frightened.ogg", -1),
     "game_over": ("assets/audio/lose.ogg", -1)
 }

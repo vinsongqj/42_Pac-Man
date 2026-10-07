@@ -12,6 +12,7 @@ class GameState:
     def __init__(self, size: tuple[int, int] = c.MAZE_SIZE,
                  allow_cheats: bool = False) -> None:
         self._allow_cheats = allow_cheats
+        self._frightened_playing = False   # frightened track is the current music
         self._ghosts_freezed = False
         self._time_frozen = False
         self._ticks: int = 0
@@ -130,8 +131,19 @@ class GameState:
         self.score = self._level_start_score
         self._reset_level()
 
+    def _stop_frightened_audio(self, resume_game_music: bool) -> None:
+        """End the frightened track. Mid-game (energizer over, new level)
+        the gameplay track takes over again; when the run is ending the
+        scene that follows starts its own music, so just stop."""
+        was_playing = self._frightened_playing
+        self._frightened_playing = False
+        if was_playing and resume_game_music:
+            audio.play_music("game")
+        else:
+            audio.stop_music_if("frightened")
+
     def _reset_level(self) -> None:
-        audio.stop_music_if("frightened")
+        self._stop_frightened_audio(resume_game_music=True)
         self._ticks = 0
         self.level = self.generator.generate(c.FIXED_FIRST_SEED +
                                              self._level_number - 1)
@@ -149,22 +161,22 @@ class GameState:
         if (self.paused or self._gameover):
             return
 
-        # The frightened track plays for as long as the player is energized
-        # and is cut as soon as that ends (or the level/game ends).
-        if not self.frightened:
-            audio.stop_music_if("frightened")
+        # The frightened track plays for as long as the player is energized;
+        # when that ends the gameplay track carries on.
+        if self._frightened_playing and not self.frightened:
+            self._stop_frightened_audio(resume_game_music=True)
 
         if not self._time_frozen:
             self._ticks += 1
             if self._ticks >= self.time_limit_ticks:
                 self._gameover = True
-                audio.stop_music_if("frightened")
+                self._stop_frightened_audio(resume_game_music=False)
 
         if len(self.level.pellets) == 0:
             if self._level_number >= c.MAX_LEVELS:
                 self._won = True
                 self.paused = True
-                audio.stop_music_if("frightened")
+                self._stop_frightened_audio(resume_game_music=False)
                 return
             self._next_level()
 
@@ -181,7 +193,7 @@ class GameState:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
                         self._gameover = True
-                        audio.stop_music_if("frightened")
+                        self._stop_frightened_audio(resume_game_music=False)
                         self.killed_by = g
                     else:
                         audio.play("death")
@@ -197,6 +209,7 @@ class GameState:
             self.level.power_pellets.remove(self.player.cell)
             audio.play("power")
             audio.play_music("frightened")
+            self._frightened_playing = True
             self.score += c.SCORE_POWER_PELLET
             self._ghost_combo = 0
             self._player.energize()
