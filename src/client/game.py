@@ -177,14 +177,13 @@ class GameState:
         if (self.paused or self._gameover):
             return
 
-        self._timer -= 1
-
         if self._frightened_playing and not self.frightened:
             self._stop_frightened_audio(resume_game_music=True)
 
         if not self._time_frozen:
+            self._timer -= 1
             self._ticks += 1
-            if self._ticks >= self.time_limit_ticks:
+            if self._timer <= 0:
                 self._gameover = True
                 self._stop_frightened_audio(resume_game_music=False)
 
