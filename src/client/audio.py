@@ -75,6 +75,13 @@ def stop_music() -> None:
     _current_music = None
 
 
+def stop_music_if(name: str) -> None:
+    """Stop the background track only if it is `name`, so a stop request
+    for the frightened track never cuts the menu or game-over music."""
+    if _current_music == name:
+        stop_music()
+
+
 def play_loop(name: str) -> None:
     """Start an sfx looping. No-op if it's already playing, so grabbing a
     second power pellet mid-frightened doesn't layer it."""

@@ -28,7 +28,7 @@ ENERGIZER_TIME = 15
 
 # Speed
 PLAYER_SPEED = 3.0
-PLAYER_ENERGIZED_SPEED = 4.5
+PLAYER_ENERGIZED_SPEED = 4.0
 GHOST_SPEED = 2.5
 GHOST_EATEN_SPEED = 6.0
 
@@ -115,7 +115,6 @@ SFX = {
     "power":     "assets/audio/eat_pacgum.ogg",
     "eat_ghost": "assets/audio/eat_ghost.ogg",
     "death":     "assets/audio/death.ogg",
-    "frightened": "assets/audio/frightened.ogg",
     "jumpscare": "assets/audio/jumpscare.ogg"
 }
 
@@ -124,5 +123,6 @@ MUSIC = {
     "menu": ("assets/audio/menu.ogg", -1),
     "cheat": ("assets/audio/cheat.ogg", -1),
     "victory": ("assets/audio/victory.ogg", -1),
+    "frightened": ("assets/audio/frightened.ogg", -1),
     "game_over": ("assets/audio/lose.ogg", -1)
 }

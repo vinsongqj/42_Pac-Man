@@ -320,7 +320,12 @@ class GameScene(Scene):
         if self._hud is None:
             self._hud = HUD(self.graphics.screen_size)
         self._update_hud()
-        audio.stop_music()
+        # Resuming from pause mid-frightened must keep that track going;
+        # anything else (menu music, a fresh game) starts silent.
+        if self.game.frightened:
+            audio.play_music("frightened")
+        else:
+            audio.stop_music()
 
     def _update_hud(self) -> None:
         assert self._hud is not None

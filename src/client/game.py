@@ -131,7 +131,7 @@ class GameState:
         self._reset_level()
 
     def _reset_level(self) -> None:
-        audio.stop("frightened")
+        audio.stop_music_if("frightened")
         self._ticks = 0
         self.level = self.generator.generate(c.FIXED_FIRST_SEED +
                                              self._level_number - 1)
@@ -149,19 +149,22 @@ class GameState:
         if (self.paused or self._gameover):
             return
 
-        if self.frightened:
-            audio.stop("frightened")
+        # The frightened track plays for as long as the player is energized
+        # and is cut as soon as that ends (or the level/game ends).
+        if not self.frightened:
+            audio.stop_music_if("frightened")
 
         if not self._time_frozen:
             self._ticks += 1
             if self._ticks >= self.time_limit_ticks:
                 self._gameover = True
-                audio.stop("frightened")
+                audio.stop_music_if("frightened")
 
         if len(self.level.pellets) == 0:
             if self._level_number >= c.MAX_LEVELS:
                 self._won = True
                 self.paused = True
+                audio.stop_music_if("frightened")
                 return
             self._next_level()
 
@@ -178,7 +181,7 @@ class GameState:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
                         self._gameover = True
-                        audio.stop("frightened")
+                        audio.stop_music_if("frightened")
                         self.killed_by = g
                     else:
                         audio.play("death")
@@ -193,7 +196,7 @@ class GameState:
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
             audio.play("power")
-            audio.play_loop("frightened")
+            audio.play_music("frightened")
             self.score += c.SCORE_POWER_PELLET
             self._ghost_combo = 0
             self._player.energize()
