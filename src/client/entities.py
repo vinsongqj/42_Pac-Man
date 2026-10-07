@@ -4,10 +4,8 @@ from typing import TYPE_CHECKING, Optional
 
 import src.client.constants as c
 from src.client.vector2 import Vector2
+from src.client.level import Level
 
-if TYPE_CHECKING:
-    from src.client.game import GameState
-    from src.client.level import Level
 
 # How close a coordinate has to be to a whole number to count as
 # "at" that cell, rather than travelling between two cells.
@@ -15,12 +13,15 @@ THRESHOLD = 0.05
 
 
 class Entity(ABC):
-    def __init__(self, pos: Vector2, speed: float = 0.0) -> None:
+    def __init__(self, pos: Vector2) -> None:
         self._pos: Vector2 = pos
         self._home: Vector2 = pos
-        self._speed: float = speed  # cells per second
         self._direction: Vector2 = Vector2(0, 0)
         self._last_move: Vector2 = Vector2(0, 0)
+
+    @property
+    def speed(self) -> float:
+        ...
 
     @property
     def pos(self) -> Vector2:
@@ -64,9 +65,7 @@ class Entity(ABC):
         return Vector2(round(self.pos.x), round(self.pos.y))
 
     def at_home(self) -> bool:
-        # Widen the window for fast movers so a single step can never
-        # jump clean over it (eaten ghosts run at more than twice speed).
-        tolerance = max(THRESHOLD, self._speed / c.FPS)
+        tolerance = max(THRESHOLD, self.speed / c.FPS)
         return self.pos.distance_to(self.home) < tolerance
 
     def move(self) -> None:
@@ -74,7 +73,7 @@ class Entity(ABC):
             self.pos = Vector2(self.pos.x, round(self.pos.y))
         if self.direction.y != 0:
             self.pos = Vector2(round(self.pos.x), self.pos.y)
-        self.pos = self.pos + self.direction * self._speed / c.FPS
+        self.pos = self.pos + self.direction * self.speed / c.FPS
         self.last_move = self.direction
 
     def _is_aligned(self) -> bool:
@@ -83,7 +82,7 @@ class Entity(ABC):
         # is aligned at least once per cell (no skipped turns) and never
         # right after leaving a centre (which used to snap it back and
         # leave it stuck when the step equalled THRESHOLD).
-        half_step = self._speed / c.FPS / 2
+        half_step = self.speed / c.FPS / 2
         return self.pos.distance_to(self.pos.round()) < max(half_step, 1e-3)
 
     @abstractmethod
@@ -92,13 +91,36 @@ class Entity(ABC):
 
 
 class Player(Entity):
-    def __init__(
-        self, pos: Vector2, speed: float = c.PLAYER_SPEED
-    ) -> None:
-        super().__init__(pos, speed)
+    def __init__(self, pos: Vector2) -> None:
+        super().__init__(pos)
         self.pending_direction: Vector2 = Vector2(0, 0)
+        self._energizer_timer: int = 0
         self._last_cell: Vector2 = self.cell
         self._remaining_lives: int = 3
+        self._is_invincible = False
+
+    @property
+    def energizer_timer(self) -> int:
+        return self._energizer_timer
+
+    def energize(self) -> None:
+        self._energizer_timer = c.ENERGIZER_TIME * c.FPS
+
+    @property
+    def is_energized(self) -> bool:
+        return self._energizer_timer > 0
+
+    @property
+    def is_invincible(self) -> bool:
+        return self._is_invincible
+
+    def toggle_invincibility(self) -> None:
+        self._is_invincible = not self._is_invincible
+
+    @property
+    def speed(self) -> float:
+        if self.is_energized: return c.PLAYER_ENERGIZED_SPEED
+        else: return c.PLAYER_SPEED
 
     @property
     def remaining_lives(self) -> int:
@@ -117,17 +139,13 @@ class Player(Entity):
     def set_input_direction(self, direction: Vector2) -> None:
         self.pending_direction = direction
 
-    def tick(self, *args: object, **kwargs: object) -> Optional[Vector2]:
-        if not args or not isinstance(args[0], object):
-            return None
-        level: "Level" = args[0]  # type: ignore[assignment]
+    def tick(self, level: Level) -> Optional[Vector2]:
+        if self.is_energized: self._energizer_timer -= 1
 
         new_cell: Optional[Vector2] = None
 
-        if (
-            not self.pending_direction.is_zero
-            and self.pending_direction == -self.direction
-        ):
+        if (not self.pending_direction.is_zero
+            and self.pending_direction == -self.direction):
             self.direction = self.pending_direction
 
         if self._is_aligned():
@@ -155,34 +173,34 @@ class Player(Entity):
 
 
 class Ghost(Entity, ABC):
-    def __init__(self, name: str, pos: Vector2, speed: float) -> None:
-        super().__init__(pos, speed)
+    def __init__(self, name: str, pos: Vector2) -> None:
+        super().__init__(pos)
         self._name: str = name
-        self._is_eaten: bool = False
         self._reviving_timer: int = 0
         self._path: list[Vector2] = []
 
     @property
     def is_eaten(self) -> bool:
-        return self._is_eaten
+        return self._reviving_timer > 0
 
     @is_eaten.setter
     def is_eaten(self, value: bool) -> None:
         if value:
             self._reviving_timer = int(10 * c.FPS)
-            self._is_eaten = True
-            self._speed = c.GHOST_EATEN_SPEED
         else:
             self._reviving_timer = 0
-            self._is_eaten = False
-            self._speed = c.GHOST_SPEED
 
     @property
     def name(self) -> str:
         return self._name
 
+    @property
+    def speed(self) -> float:
+        if self.is_eaten: return c.GHOST_EATEN_SPEED
+        else: return c.GHOST_SPEED
+
     @abstractmethod
-    def _get_target_pos(self, game: "GameState") -> Vector2:
+    def _get_target_pos(self, player: Player) -> Vector2:
         ...
 
     def _get_directions(self, level: "Level") -> list[Vector2]:
@@ -195,112 +213,81 @@ class Ghost(Entity, ABC):
         else:
             return [-self.direction]
 
-    def tick(self, *args: object, **kwargs: object) -> Optional[Vector2]:
-        if not args or not isinstance(args[0], object):
-            return None
-        game: "GameState" = args[0]  # type: ignore[assignment]
-
+    def _get_distanation(self, level: Level, player: Player) -> Vector2:
         if self.is_eaten:
-            if self._reviving_timer <= 0:
-                self.is_eaten = False
-            elif self.at_home():
-                self._reviving_timer -= 1
-                self._pos = self._pos.round()
-                self.direction = Vector2(0, 0)
-                return None
+            distanation = self.home
+        else:
+            distanation = self._get_target_pos(player)
+        path = level.bfs(self.pos, distanation)
+        if path:
+            return path.popleft()
+        else:
+            return distanation
+        
+    def tick(self, level: Level, player: Player) -> None:
+        if self.is_eaten and self.at_home():
+            self._reviving_timer -= 1
+            self._pos = self._pos.round()
+            self.direction = Vector2(0, 0)
+        else:
+            dirs = self._get_directions(level)
 
-        dirs = self._get_directions(game.level)
+            if self._is_aligned():
+                if any(d != self.direction for d in dirs):
+                    tarpos = self._get_distanation(level, player)
 
-        if self._is_aligned():
-            if any(d != self.direction for d in dirs):
-                tarpos = self._get_target_pos(game)
-
-                best_distance = 99999999.0
-                best_direction = Vector2(0, 0)
-
-                if not dirs:
+                    best_distance = 99999999.0
                     best_direction = Vector2(0, 0)
-                elif game.frightened and not self.is_eaten:
-                    best_direction = random.choice(dirs)
-                else:
-                    for d in dirs:
-                        next_pos = self.pos + d
-                        distance_to_target = next_pos.distance_to(tarpos)
-                        if distance_to_target < best_distance:
-                            best_distance = distance_to_target
-                            best_direction = d
 
-                self.direction = best_direction
+                    if not dirs:
+                        best_direction = Vector2(0, 0)
+                    elif player.is_energized and not self.is_eaten:
+                        best_direction = random.choice(dirs)
+                    else:
+                        for d in dirs:
+                            next_pos = self.pos + d
+                            distance_to_target = next_pos.distance_to(tarpos)
+                            if distance_to_target < best_distance:
+                                best_distance = distance_to_target
+                                best_direction = d
 
-        if game.level.can_move(self.pos, self.pos + self.direction * 0.5):
-            self.move()
+                    self.direction = best_direction
 
-        return None
+            if level.can_move(self.pos, self.pos + self.direction * 0.5):
+                self.move()
 
 
 class Blinky(Ghost):
-    def __init__(self, pos: Vector2, speed: float) -> None:
-        super().__init__("red", pos, speed)
+    def __init__(self, pos: Vector2) -> None:
+        super().__init__("red", pos)
 
-    def _get_target_pos(self, game: "GameState") -> Vector2:
-        if self.is_eaten:
-            target = self.home
-        else:
-            target = game.player.pos
-        path = game.level.bfs(self.pos, target)
-        if path:
-            return path.popleft()
-        else:
-            return game.player.pos
+    def _get_target_pos(self, player) -> Vector2:
+        return player.pos
 
 
 class Pinky(Ghost):
-    def __init__(self, pos: Vector2, speed: float) -> None:
-        super().__init__("pink", pos, speed)
+    def __init__(self, pos: Vector2) -> None:
+        super().__init__("pink", pos)
 
-    def _get_target_pos(self, game: "GameState") -> Vector2:
-        player = game.player
-        if self.is_eaten:
-            target = self.home
-        else:
-            target = player.pos + player.direction * 4
-        path = game.level.bfs(self.pos, target)
-        if path:
-            return path.popleft()
-        else:
-            return target
+    def _get_target_pos(self, player) -> Vector2:
+        return player.pos + player.direction * 4
 
 
 class Inky(Ghost):
-    def __init__(self, pos: Vector2, speed: float) -> None:
-        super().__init__("cyan", pos, speed)
+    def __init__(self, pos: Vector2) -> None:
+        super().__init__("cyan", pos)
 
-    def _get_target_pos(self, game: "GameState") -> Vector2:
-        player = game.player
-        if self.is_eaten:
-            target = self.home
-        else:
-            target = 2 * game.ghosts[0].pos - (
-                player.pos + player.direction * 2
-            )
-        path = game.level.bfs(self.pos, target)
-        if path:
-            return path.popleft()
-        else:
-            return target
+    def _get_target_pos(self, player) -> Vector2:
+        #return 2 * game.ghosts[0].pos - (player.pos + player.direction * 2)
+        return player.pos
 
 
 class Clyde(Ghost):
-    def __init__(self, pos: Vector2, speed: float) -> None:
-        super().__init__("yellow", pos, speed)
+    def __init__(self, pos: Vector2) -> None:
+        super().__init__("yellow", pos)
 
-    def _get_target_pos(self, game: "GameState") -> Vector2:
-        if game.player.pos.distance_to(self.pos) > 8 and not self.is_eaten:
-            target = game.player.pos
+    def _get_target_pos(self, player) -> Vector2:
+        if player.pos.distance_to(self.pos) > 8:
+            return player.pos
         else:
-            target = self.home
-        path = game.level.bfs(self.pos, target)
-        if path:
-            return path.popleft()
-        else:
-            return target
+            return self.home

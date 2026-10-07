@@ -14,12 +14,9 @@ class GameState:
         self._allow_cheats = allow_cheats
         self._ghosts_freezed = False
         self._time_frozen = False
-        self._player_invincible = False
         self._ticks: int = 0
         self.paused: bool = False
         self._gameover = False
-        self._frightened_timer = 0
-        self._frightened = False
         self.generator = LevelGenerator(size)
         self._level_number = 0
         self._level: Level
@@ -37,12 +34,12 @@ class GameState:
         self.eaten_power_pellets: set[Vector2] = set()
         self._next_level()
 
-    def set_player_invincible(self, value: bool):
-        self._player_invincible = value
-
     @property
-    def player_invincible(self):
-        return self._player_invincible
+    def player_invincible(self) -> bool:
+        return self.player.is_invincible
+
+    def toggle_player_invincibility(self):
+        self._player.toggle_invincibility()
 
     def ghosts_freeze(self):
         self._ghosts_freezed = self.allow_cheats
@@ -77,11 +74,11 @@ class GameState:
 
     @property
     def frightened(self) -> bool:
-        return self._frightened
+        return self._player.is_energized
 
     @property
     def frightened_ticks_left(self) -> int:
-        return self._frightened_timer
+        return self._player.energizer_timer
 
     @property
     def level_number(self) -> int:
@@ -139,13 +136,11 @@ class GameState:
         self.level = self.generator.generate(c.FIXED_FIRST_SEED +
                                              self._level_number - 1)
         self._player = Player(self.level.player_start)
-        ghost_speed = c.GHOST_SPEED
         self.ghosts = [
-            Blinky(Vector2(0, 0), ghost_speed),
-            Pinky(Vector2(self.level.width - 1, 0), ghost_speed),
-            Inky(Vector2(self.level.width - 1, self.level.height - 1),
-                 ghost_speed),
-            Clyde(Vector2(0, self.level.height - 1), ghost_speed)
+            Blinky(Vector2(0, 0)),
+            Pinky(Vector2(self.level.width - 1, 0)),
+            Inky(Vector2(self.level.width - 1, self.level.height - 1)),
+            Clyde(Vector2(0, self.level.height - 1))
         ]
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()
@@ -154,12 +149,8 @@ class GameState:
         if (self.paused or self._gameover):
             return
 
-        if self._frightened_timer > 0:
-            self._frightened_timer -= 1
-        else:
-            if self._frightened:
-                audio.stop("frightened")
-            self._frightened = False
+        if self.frightened:
+            audio.stop("frightened")
 
         if not self._time_frozen:
             self._ticks += 1
@@ -177,17 +168,13 @@ class GameState:
         self._tick_entities()
 
         for g in self.ghosts:
-            if g.is_eaten:
-                # Already eaten: harmless, and must not have its revive
-                # timer reset by touching the player again.
-                continue
-            if math.dist(g.pos, self.player.pos) < 0.25:
-                if self._frightened:
+            if not g.is_eaten and math.dist(g.pos, self.player.pos) < 0.25:
+                if self.frightened:
                     g.is_eaten = True
                     audio.play("eat_ghost")
                     self.score += c.SCORE_GHOST * 2 ** self._ghost_combo
                     self._ghost_combo += 1
-                elif not self._player_invincible:
+                elif not self.player_invincible:
                     self.player.decrease_remaining_lives()
                     if self.player.remaining_lives <= 0:
                         self._gameover = True
@@ -209,11 +196,10 @@ class GameState:
             audio.play_loop("frightened")
             self.score += c.SCORE_POWER_PELLET
             self._ghost_combo = 0
-            self._frightened_timer = int(c.FPS * 10)
-            self._frightened = True
+            self._player.energize()
 
     def _tick_entities(self) -> None:
         self.player.tick(self.level)
         if not self._ghosts_freezed:
             for ghost in self.ghosts:
-                ghost.tick(self)
+                ghost.tick(self.level, self.player)
