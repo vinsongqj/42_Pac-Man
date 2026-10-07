@@ -1,3 +1,5 @@
+"""Main application entry point for launching the Pac-Man game client."""
+
 import sys
 from pathlib import Path
 import pygame
@@ -22,6 +24,7 @@ if str(BASE_DIR) not in sys.path:
 
 
 def main() -> None:
+    """Initialize audio, display window, configuration, and main loop."""
     if len(sys.argv) == 2:
         config_path = Path(sys.argv[1])
         if config_path.suffix.lower() != ".json":
@@ -62,8 +65,10 @@ def main() -> None:
         SceneState.LEVEL_COMPLETE: VictoryScene(),
     }
     manager = SceneManager(screens, start=SceneState.MENU)
-    screen = pygame.display.set_mode(manager.current_screen.screen_size(),
-                                     pygame.RESIZABLE | pygame.SCALED)
+    screen = pygame.display.set_mode(
+        manager.current_screen.screen_size(),
+        pygame.RESIZABLE | pygame.SCALED
+    )
     clock = pygame.time.Clock()
 
     running = True
@@ -87,8 +92,10 @@ def main() -> None:
 
         desired_size = manager.current_screen.screen_size()
         if screen.get_size() != desired_size:
-            screen = pygame.display.set_mode(desired_size,
-                                             pygame.RESIZABLE | pygame.SCALED)
+            screen = pygame.display.set_mode(
+                desired_size,
+                pygame.RESIZABLE | pygame.SCALED
+            )
 
         manager.draw(screen)
         pygame.display.flip()

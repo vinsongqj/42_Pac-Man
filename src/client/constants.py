@@ -1,3 +1,6 @@
+"""Global constants, default configuration values,
+and asset paths for the game client."""
+
 from src.client.vector2 import Vector2
 
 FPS = 60.0
@@ -56,6 +59,14 @@ _DIRECTIONS = ("UP", "DOWN", "LEFT", "RIGHT")
 
 
 def _same_for_all_directions(frames: list[str]) -> dict[str, list[str]]:
+    """Map a set of frame paths to all primary direction keys.
+
+    Args:
+        frames: Sequence of sprite image file paths.
+
+    Returns:
+        A dictionary matching each direction string to the given frame paths.
+    """
     return {d: list(frames) for d in _DIRECTIONS}
 
 

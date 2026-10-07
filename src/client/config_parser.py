@@ -1,3 +1,9 @@
+"""Configuration file loader and parser.
+
+Handles reading, comment-stripping, JSON parsing, validation,
+and applying user-configured overrides to game settings.
+"""
+
 from __future__ import annotations
 import difflib
 import json
@@ -22,22 +28,36 @@ KNOWN_KEYS = (
 
 
 class ConfigError(Exception):
-    """Any problem with the configuration file (message is user-ready)."""
+    """Exception raised for errors encountered during configuration parsing
+    or validation."""
 
 
 @dataclass(frozen=True)
 class Config:
-    levels: int                             # levels to clear to win
+    """Data class storing runtime game configuration values.
+
+    Attributes:
+        levels: Total levels to clear to achieve victory.
+        lives: Starting number of player lives.
+        points_per_pacgum: Points awarded per standard dot.
+        points_per_super_pacgum: Points awarded per power pellet.
+        points_per_ghost: Base points awarded for eating a ghost.
+        seed: Random seed for generating the initial level.
+        level_max_time: Time limit per level in seconds.
+        cheats: Whether cheat controls are activated for the run.
+    """
+
+    levels: int
     lives: int
     points_per_pacgum: int
     points_per_super_pacgum: int
     points_per_ghost: int
-    seed: int                               # seed of the first level
-    level_max_time: int                     # seconds per level
-    cheats: bool                            # cheat mode on for the whole run
+    seed: int
+    level_max_time: int
+    cheats: bool
 
     def apply(self) -> None:
-        """Override the defaults in constants.py with these values."""
+        """Override the runtime defaults in constants.py with these values."""
         c.MAX_LEVELS = self.levels
         c.PLAYER_LIVES = self.lives
         c.SCORE_PELLET = self.points_per_pacgum
@@ -49,6 +69,18 @@ class Config:
 
 
 def strip_comments(text: str) -> str:
+    """Remove line (`#`, `//`) and block (`/* ... */`) comments
+    from a config string.
+
+    Args:
+        text: Raw configuration text.
+
+    Returns:
+        Cleaned text string stripped of comments while retaining line breaks.
+
+    Raises:
+        ConfigError: If a block comment is left unclosed.
+    """
     out: list[str] = []
     i, n = 0, len(text)
     in_string = False
@@ -56,7 +88,7 @@ def strip_comments(text: str) -> str:
         ch = text[i]
         if in_string:
             out.append(ch)
-            if ch == "\\" and i + 1 < n:      # escaped char, e.g. \" or \\
+            if ch == "\\" and i + 1 < n:
                 out.append(text[i + 1])
                 i += 2
                 continue
@@ -84,9 +116,18 @@ def strip_comments(text: str) -> str:
     return "".join(out)
 
 
-# --- reading + parsing --------------------------------------------------
-
 def _read(path: str) -> str:
+    """Read raw contents of a text file with UTF-8 decoding.
+
+    Args:
+        path: File system path.
+
+    Returns:
+        The content of the file.
+
+    Raises:
+        ConfigError: If the file cannot be found or read.
+    """
     try:
         return Path(path).read_text(encoding="utf-8-sig")
     except FileNotFoundError:
@@ -102,6 +143,17 @@ def _read(path: str) -> str:
 
 
 def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """JSON object creation hook enforcing unique keys.
+
+    Args:
+        pairs: List of key-value pairs decoded from JSON.
+
+    Returns:
+        Constructed dictionary.
+
+    Raises:
+        ConfigError: If duplicate keys are encountered.
+    """
     result: dict[str, Any] = {}
     for key, value in pairs:
         if key in result:
@@ -111,10 +163,26 @@ def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def _bad_constant(name: str) -> Any:
+    """Handler disallowing JSON constants such as Infinity or NaN.
+
+    Args:
+        name: Name of constant encountered.
+
+    Raises:
+        ConfigError: Always thrown to reject illegal constant values.
+    """
     raise ConfigError(f"{name} is not allowed, use a regular number")
 
 
 def _type_name(value: Any) -> str:
+    """Return a readable type description for error messages.
+
+    Args:
+        value: Any target object value.
+
+    Returns:
+        Human-readable type descriptor string.
+    """
     if value is None:
         return "null"
     if isinstance(value, bool):
@@ -129,6 +197,18 @@ def _type_name(value: Any) -> str:
 
 
 def _parse_json(path: str, text: str) -> Any:
+    """Parse JSON string with comment removal and duplicate checking.
+
+    Args:
+        path: Path identifier used for error messaging.
+        text: Raw JSON payload.
+
+    Returns:
+        Parsed JSON data structure.
+
+    Raises:
+        ConfigError: If the input string is empty or contains illegal JSON.
+    """
     try:
         cleaned = strip_comments(text)
         if not cleaned.strip():
@@ -147,14 +227,24 @@ def _parse_json(path: str, text: str) -> Any:
         ) from None
     except RecursionError:
         raise ConfigError(f"{path}: JSON is nested too deeply") from None
-    except ValueError as e:                  # e.g. absurdly long integers
+    except ValueError as e:
         raise ConfigError(f"{path}: invalid JSON: {e}") from None
 
 
-# --- validation ---------------------------------------------------------
-
 def _check_int(value: Any, label: str, lo: int, hi: int,
                errors: list[str]) -> Optional[int]:
+    """Validate that a value is an integer within a given range.
+
+    Args:
+        value: Input value to validate.
+        label: Parameter name for formatting error strings.
+        lo: Minimum allowable integer.
+        hi: Maximum allowable integer.
+        errors: Accumulator list for storing discovered error strings.
+
+    Returns:
+        The validated integer, or None if validation fails.
+    """
     if isinstance(value, float):
         errors.append(f"{label}: expected a whole number, got {value}")
         return None
@@ -170,6 +260,19 @@ def _check_int(value: Any, label: str, lo: int, hi: int,
 
 def _int_key(data: dict[str, Any], key: str, default: int, lo: int, hi: int,
              errors: list[str]) -> int:
+    """Extract and validate an integer parameter from a dictionary.
+
+    Args:
+        data: Parameter dictionary.
+        key: Dictionary key to read.
+        default: Fallback default value if key is omitted.
+        lo: Minimum valid value.
+        hi: Maximum valid value.
+        errors: Accumulator list for error messages.
+
+    Returns:
+        The validated integer value or default.
+    """
     if key not in data:
         return default
     value = _check_int(data[key], f"'{key}'", lo, hi, errors)
@@ -177,16 +280,36 @@ def _int_key(data: dict[str, Any], key: str, default: int, lo: int, hi: int,
 
 
 def _levels(data: dict[str, Any], errors: list[str]) -> int:
+    """Extract the level count configuration value.
+
+    Args:
+        data: Parameter dictionary.
+        errors: Accumulator list for error messages.
+
+    Returns:
+        Parsed level count value.
+    """
     return _int_key(data, "levels", c.MAX_LEVELS, 1, MAX_LEVELS_ALLOWED,
                     errors)
 
 
 def _bool_key(data: dict[str, Any], key: str, default: bool,
               errors: list[str]) -> bool:
+    """Extract and validate a boolean key from a dictionary.
+
+    Args:
+        data: Parameter dictionary.
+        key: Dictionary key to check.
+        default: Fallback default value.
+        errors: Accumulator list for error messages.
+
+    Returns:
+        The extracted boolean value.
+    """
     if key not in data:
         return default
     value = data[key]
-    if not isinstance(value, bool):          # 1, "true", null ... are errors
+    if not isinstance(value, bool):
         errors.append(f"'{key}': expected true or false, "
                       f"got {_type_name(value)}")
         return default
@@ -194,6 +317,18 @@ def _bool_key(data: dict[str, Any], key: str, default: bool,
 
 
 def _build(data: dict[str, Any], path: str) -> Config:
+    """Construct and validate a Config instance from key-value pairs.
+
+    Args:
+        data: Dictionary containing configuration key-value mappings.
+        path: File source name for warning formatting.
+
+    Returns:
+        A populated, validated `Config` instance.
+
+    Raises:
+        ConfigError: If any configuration option fails validation.
+    """
     for key in data:
         if key not in KNOWN_KEYS:
             hint = difflib.get_close_matches(key, KNOWN_KEYS, n=1)
@@ -224,6 +359,17 @@ def _build(data: dict[str, Any], path: str) -> Config:
 
 
 def load_config(path: str) -> Config:
+    """Load, parse, and validate a JSON configuration file.
+
+    Args:
+        path: Path to the target configuration file.
+
+    Returns:
+        The validated Config object.
+
+    Raises:
+        ConfigError: If reading, parsing, or validation fails.
+    """
     data = _parse_json(path, _read(path))
     if not isinstance(data, dict):
         raise ConfigError(f"{path}: the top level must be a JSON object "

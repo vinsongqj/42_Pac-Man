@@ -1,4 +1,5 @@
 """Constants and type aliases shared by every scene."""
+
 from typing import Optional, Callable
 import pygame
 import src.client.constants as c
@@ -38,7 +39,7 @@ MenuOption = tuple[str, Callable[[], SceneResult]]
 InfoLine = tuple[str, display.ColorType]
 
 HINT_COLOR = (140, 140, 140)
-GHOST_TRAIL_MARGIN = 70        # distance from each side edge to the column
+GHOST_TRAIL_MARGIN = 70
 GHOST_TRAIL_ICON_SIZE = (64, 64)
-GHOST_TRAIL_GAP = 100          # pixel distance between icon centres
-GHOST_TRAIL_SPEED = 45.0      # pixels per second; negative scrolls upward
+GHOST_TRAIL_GAP = 100
+GHOST_TRAIL_SPEED = 45.0

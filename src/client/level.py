@@ -1,3 +1,6 @@
+"""Maze level generation, layout mapping, pathfinding,
+and collision queries."""
+
 from collections import deque
 from src.client.constants import UP, DOWN, LEFT, RIGHT, MAZE_SIZE
 from mazegenerator import MazeGenerator
@@ -5,11 +8,26 @@ from src.client.vector2 import Vector2
 
 
 class LevelGenerator:
+    """Generates procedural maze grid levels using a specified random seed."""
+
     def __init__(self, size: tuple[int, int] = MAZE_SIZE):
+        """Initialize level generator.
+
+        Args:
+            size: Dimension tuple for maze grid dimensions `(width, height)`.
+        """
         self._size = size
         self._generator = MazeGenerator(size=size, perfect=False, seed=42)
 
     def generate(self, seed: int = 42) -> 'Level':
+        """Generate a fresh level populated with maze walls.
+
+        Args:
+            seed: Integer random seed controlling maze layout structure.
+
+        Returns:
+            Constructed `Level` instance.
+        """
         self._generator = MazeGenerator(size=self._size, perfect=False,
                                         seed=seed)
         self._generator.generate(seed)
@@ -17,8 +35,15 @@ class LevelGenerator:
 
 
 class Level:
+    """Represents a maze level, containing walkability maps, paths,
+    and dots."""
 
     def __init__(self, maze: list[list[int]]):
+        """Initialize level using a procedural maze bitmask map.
+
+        Args:
+            maze: Two-dimensional list containing cell wall bitmask values.
+        """
         self._maze: list[list[int]] = maze
         self._width: int = len(self._maze[0])
         self._height: int = len(self._maze)
@@ -32,33 +57,49 @@ class Level:
 
     @property
     def maze(self) -> list[list[int]]:
+        """Get 2D wall bitmask matrix."""
         return self._maze
 
     @property
     def width(self) -> int:
+        """Get grid width in cells."""
         return self._width
 
     @property
     def height(self) -> int:
+        """Get grid height in cells."""
         return self._height
 
     @property
     def player_start(self) -> Vector2:
+        """Get player initial spawn tile coordinate."""
         return self._player_start
 
     @property
     def pellets(self) -> set[Vector2]:
+        """Get set of remaining dot pellet positions."""
         return self._pellets
 
     @property
     def power_pellets(self) -> set[Vector2]:
+        """Get set of remaining power energizer pellet positions."""
         return self._power_pellets
 
     @property
     def ghost_starts(self) -> list[Vector2]:
+        """Get list of ghost start location coordinates."""
         return self._ghost_starts
 
     def bfs(self, a: Vector2, b: Vector2) -> deque[Vector2] | None:
+        """Find shortest path between two tiles using Breadth-First Search.
+
+        Args:
+            a: Starting cell position.
+            b: Destination goal cell position.
+
+        Returns:
+            A queue containing path step vectors, or None if unnavigable.
+        """
         a, b = a.round(), b.round()
         if not self._is_walkable(b) or not self._is_walkable(a):
             return None
@@ -101,6 +142,14 @@ class Level:
         return deque(path)
 
     def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
+        """Retrieve neighboring cells accessible from a given position.
+
+        Args:
+            a: Source position vector.
+
+        Returns:
+            List of accessible target coordinate vectors.
+        """
         result = []
         for d in [DOWN, LEFT, RIGHT, UP]:
             if self.can_move(a, a + d):
@@ -108,14 +157,24 @@ class Level:
         return result
 
     def _is_walkable(self, point: Vector2) -> bool:
+        """Check if grid cell is inside bounds and accessible."""
         return (0 <= point.x < self.width and
                 0 <= point.y < self.height and
                 self.maze[int(point.y)][int(point.x)] != 15)
 
     def _is_reachable(self, point: Vector2) -> bool:
+        """Alias for checking cell walkability."""
         return self._is_walkable(point)
 
     def _nearest_walkable(self, point: Vector2) -> Vector2:
+        """Locate closest walkable tile coordinate using BFS.
+
+        Args:
+            point: Initial search center position.
+
+        Returns:
+            First reachable walkable vector coordinate found.
+        """
         if self._is_walkable(point):
             return point
 
@@ -139,6 +198,8 @@ class Level:
         return Vector2(start[0], start[1])
 
     def _layout(self) -> None:
+        """Populate initial pellet sets and start positions across
+        the level map."""
         corners = [
             Vector2(0, 0),
             Vector2(self.width - 1, 0),
@@ -160,6 +221,16 @@ class Level:
                 self._pellets.add(cell)
 
     def can_move(self, a: Vector2, b: Vector2) -> bool:
+        """Verify if direct traversal between adjacent cells is
+        unimpeded by walls.
+
+        Args:
+            a: Origin cell coordinate.
+            b: Adjacent destination cell coordinate.
+
+        Returns:
+            True if path is unblocked, False otherwise.
+        """
         a_x = round(a.x)
         a_y = round(a.y)
         b_x = round(b.x)

@@ -1,3 +1,9 @@
+"""Audio management module for sound effects and background music.
+
+Provides helper methods to pre-load sound assets, trigger playback based on
+availability or channel activity, and stream music tracks.
+"""
+
 import sys
 from typing import Union, Optional
 import pygame
@@ -8,6 +14,15 @@ _next: dict[str, int] = {}
 
 
 def _load(path: str) -> Union[pygame.mixer.Sound, None]:
+    """Load a single sound effect file and set its default volume.
+
+    Args:
+        path: Path to the sound file.
+
+    Returns:
+        A loaded `pygame.mixer.Sound` instance if successful, or `None` if
+        the file cannot be found or loaded.
+    """
     try:
         snd = pygame.mixer.Sound(path)
         snd.set_volume(c.SFX_VOLUME)
@@ -18,6 +33,8 @@ def _load(path: str) -> Union[pygame.mixer.Sound, None]:
 
 
 def load_all() -> None:
+    """Pre-load all registered sound effects defined in the
+    application constants."""
     for name, paths in c.SFX.items():
         if isinstance(paths, str):
             paths = [paths]
@@ -28,6 +45,16 @@ def load_all() -> None:
 
 
 def play(name: str, only_if_idle: bool = False) -> None:
+    """Play a sound effect by its identifier.
+
+    Supports round-robin cycling over sound variants if
+    multiple files are attached to the same name.
+
+    Args:
+        name: The sound effect key.
+        only_if_idle: If True, skips playback if any channel
+        is already actively playing a sound from this category.
+    """
     sounds = _sounds.get(name)
     if not sounds:
         return
@@ -41,6 +68,11 @@ _current_music: Optional[str] = None
 
 
 def play_music(name: str) -> None:
+    """Load and play a background music track.
+
+    Args:
+        name: Key corresponding to an entry in `c.MUSIC`.
+    """
     global _current_music
     if name == _current_music and pygame.mixer.music.get_busy():
         return
@@ -61,17 +93,28 @@ def play_music(name: str) -> None:
 
 
 def stop_music() -> None:
+    """Stop currently playing background music and reset track state."""
     global _current_music
     pygame.mixer.music.stop()
     _current_music = None
 
 
 def stop_music_if(name: str) -> None:
+    """Stop background music if the currently playing track matches `name`.
+
+    Args:
+        name: Name of the music track to check.
+    """
     if _current_music == name:
         stop_music()
 
 
 def play_loop(name: str) -> None:
+    """Loop a specific sound effect indefinitely if not already playing.
+
+    Args:
+        name: The sound effect key.
+    """
     sounds = _sounds.get(name)
     if not sounds:
         return
@@ -82,5 +125,10 @@ def play_loop(name: str) -> None:
 
 
 def stop(name: str) -> None:
+    """Stop all playing channels associated with a given sound effect key.
+
+    Args:
+        name: The sound effect key.
+    """
     for snd in _sounds.get(name, []):
         snd.stop()

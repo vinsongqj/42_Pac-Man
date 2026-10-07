@@ -16,8 +16,15 @@ import src.client.audio as audio
 
 class GameState:
     """Tracks the active level, player, ghosts, score, and win/lose state."""
+
     def __init__(self, size: tuple[int, int] = c.MAZE_SIZE,
                  allow_cheats: bool = False) -> None:
+        """Initialize game state instance.
+
+        Args:
+            size: Dimension tuple for maze tile grid generation.
+            allow_cheats: Enable toggle flags for testing/cheating operations.
+        """
         self._allow_cheats = allow_cheats
         self._frightened_playing = False
         self._timer = c.FPS * c.LEVEL_TIME_LIMIT
@@ -32,7 +39,6 @@ class GameState:
         self._player: Player
         self.ghosts: list[Ghost]
         self.score: int = 0
-        # Set when a ghost takes the last life (None for a timeout game over)
         self.killed_by: Optional[Ghost] = None
         self._level_start_score: int = 0
         self._ghost_combo: int = 0
@@ -45,6 +51,7 @@ class GameState:
 
     @property
     def player_invincible(self) -> bool:
+        """Check whether the player is currently invincible."""
         return self.player.is_invincible
 
     def toggle_player_invincibility(self) -> None:
@@ -67,6 +74,7 @@ class GameState:
 
     @property
     def time_frozen(self) -> bool:
+        """Check whether level timer processing is frozen."""
         return self._time_frozen
 
     def freeze_time(self) -> None:
@@ -81,46 +89,57 @@ class GameState:
 
     @property
     def timer(self) -> int:
+        """Get remaining level time limit in whole seconds."""
         return int(self._timer // c.FPS)
 
     @property
     def ghosts_freezed(self) -> bool:
+        """Check if ghosts are locked in place."""
         return self._ghosts_freezed
 
     @property
     def allow_cheats(self) -> bool:
+        """Check whether cheat commands are permitted."""
         return self._allow_cheats
 
     @property
     def frightened(self) -> bool:
+        """Check whether ghosts are in a frightened state."""
         return self._player.is_energized
 
     @property
     def frightened_ticks_left(self) -> int:
+        """Get remaining tick duration of active energizer status."""
         return self._player.energizer_timer
 
     @property
     def level_number(self) -> int:
+        """Get active level index number."""
         return self._level_number
 
     @property
     def ticks(self) -> int:
+        """Get cumulative frame ticks elapsed during current level."""
         return self._ticks
 
     @property
     def time_limit_ticks(self) -> int:
+        """Get total level duration converted to tick units."""
         return int(c.LEVEL_TIME_LIMIT * c.FPS)
 
     @property
     def gameover(self) -> bool:
+        """Check whether game defeat condition has been reached."""
         return self._gameover
 
     @property
     def won(self) -> bool:
+        """Check whether game victory condition has been met."""
         return self._won
 
     @property
     def player(self) -> Player:
+        """Get active player instance."""
         return self._player
 
     def _next_level(self) -> None:
@@ -146,9 +165,12 @@ class GameState:
         self._reset_level()
 
     def _stop_frightened_audio(self, resume_game_music: bool) -> None:
-        """End the frightened track. Mid-game (energizer over, new level)
-        the gameplay track takes over again; when the run is ending the
-        scene that follows starts its own music, so just stop."""
+        """End frightened track and option to restore standard gameplay audio.
+
+        Args:
+            resume_game_music: If True, resumes standard gameplay
+            background music.
+        """
         was_playing = self._frightened_playing
         self._frightened_playing = False
         if was_playing and resume_game_music:
@@ -174,6 +196,8 @@ class GameState:
         self.eaten_power_pellets = set()
 
     def tick(self) -> None:
+        """Execute single frame update step processing timing, input,
+        and collision state."""
         if (self.paused or self._gameover):
             return
 

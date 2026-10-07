@@ -1,3 +1,5 @@
+"""Main menu scene handling leaderboard presentation and quit prompts."""
+
 from typing import Optional, Any
 import pygame
 import src.client.constants as c
@@ -9,8 +11,14 @@ from src.client.scenes.scene_constants import HINT_COLOR, MenuOption
 
 
 class MenuScene(Scene):
+    """Main menu display managing start game options and leaderboard state."""
+
     def on_enter(self, **kwargs: Any) -> None:
-        """Prepare the menu screen and rebuild the leaderboard view."""
+        """Prepare the menu screen and rebuild the leaderboard view.
+
+        Args:
+            **kwargs: Unused event argument parameters.
+        """
         audio.play_music("cheat" if c.CHEATS_ENABLED else "menu")
         rect = pygame.Rect(0, 0, c.WIDTH, c.HEIGHT)
         self.title_text = display.Text(
@@ -51,27 +59,34 @@ class MenuScene(Scene):
             ("RESUME", lambda: None),
             ("QUIT", lambda: SceneState.QUIT),
         ]
-        self._quit_overlay = pygame.Surface((c.WIDTH, c.HEIGHT),
-                                            pygame.SRCALPHA)
+        self._quit_overlay = pygame.Surface(
+            (c.WIDTH, c.HEIGHT), pygame.SRCALPHA
+        )
         self._quit_overlay.fill((0, 0, 0, 190))
         self._quit_title_text = display.Text(
             "QUIT GAME?", 60, "White", (rect.centerx, 380),
-            anchor="midtop")
+            anchor="midtop"
+        )
         self._quit_items: list[tuple[display.Text, display.Text]] = []
         opt_y = 520
         for label, _ in self._quit_options:
-            normal = display.Text(label, 40, (200, 200, 200),
-                                  (rect.centerx, opt_y), anchor="center")
-            highlighted = display.Text(label, 40, c.PLAYER_COLOR,
-                                       (rect.centerx, opt_y),
-                                       anchor="center")
+            normal = display.Text(
+                label, 40, (200, 200, 200), (rect.centerx, opt_y),
+                anchor="center"
+            )
+            highlighted = display.Text(
+                label, 40, c.PLAYER_COLOR, (rect.centerx, opt_y),
+                anchor="center"
+            )
             self._quit_items.append((normal, highlighted))
             opt_y += 70
         self._quit_hint_text = display.Text(
             "ENTER TO SELECT   ESC TO CANCEL", 20, HINT_COLOR,
-            (rect.centerx, opt_y + 30), anchor="center")
+            (rect.centerx, opt_y + 30), anchor="center"
+        )
 
     def _build_scores(self) -> None:
+        """Build rendered text labels for high scores table."""
         rect = pygame.Rect(0, 0, c.WIDTH, c.HEIGHT)
         self._scores_version = SCOREBOARD.version
         score_data: list[dict[str, Any]] = SCOREBOARD.entries
@@ -80,12 +95,13 @@ class MenuScene(Scene):
         line_height = 38
         max_name_length = 7
 
-        rank_x = rect.centerx - 110   # Column 1: Rank (Right aligned)
-        name_x = rect.centerx - 60   # Column 2: Player Name (Left aligned)
-        score_x = rect.centerx + 70  # Column 3: High Score (Right aligned)
+        rank_x = rect.centerx - 110
+        name_x = rect.centerx - 60
+        score_x = rect.centerx + 70
 
-        self.scores_text: list[tuple[display.Text, display.Text,
-                                     display.Text]] = []
+        self.scores_text: list[
+            tuple[display.Text, display.Text, display.Text]
+        ] = []
 
         for idx, entry in enumerate(score_data[:10]):
             row_y = start_y + (idx * line_height)
@@ -134,20 +150,35 @@ class MenuScene(Scene):
             )
 
     def screen_size(self) -> tuple[int, int]:
+        """Get window dimensions.
+
+        Returns:
+            Screen width and height dimensions tuple.
+        """
         return c.WIDTH, c.HEIGHT
 
     def handle_event(self,
                      event: "pygame.event.Event") -> SceneResult:
+        """Handle keyboard navigation for starting or quitting.
+
+        Args:
+            event: Pygame key input event.
+
+        Returns:
+            Target SceneResult instruction.
+        """
         if event.type != pygame.KEYDOWN:
             return None
 
         if self._quit_menu_open:
             if event.key in (pygame.K_UP, pygame.K_w):
                 self._quit_selected = (
-                    (self._quit_selected - 1) % len(self._quit_options))
+                    (self._quit_selected - 1) % len(self._quit_options)
+                )
             elif event.key in (pygame.K_DOWN, pygame.K_s):
                 self._quit_selected = (
-                    (self._quit_selected + 1) % len(self._quit_options))
+                    (self._quit_selected + 1) % len(self._quit_options)
+                )
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER,
                                pygame.K_SPACE):
                 result = self._quit_options[self._quit_selected][1]()
@@ -166,12 +197,18 @@ class MenuScene(Scene):
         return None
 
     def update(self) -> None:
+        """Update pulsing text animation and check leaderboard updates."""
         self.subtitle_text.fade()
         if self._scores_version != SCOREBOARD.version:
             self._build_scores()
         return None
 
     def draw(self, surface: "pygame.Surface") -> None:
+        """Draw menu elements, score entries, and overlay dialogs.
+
+        Args:
+            surface: Render target display surface.
+        """
         surface.fill("black")
         self.pacman.draw(surface)
         self.title_text.draw(surface)
