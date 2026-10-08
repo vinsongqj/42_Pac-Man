@@ -8,6 +8,7 @@ install:
 
 build:	install
 	@uv run pyinstaller --clean --noconfirm pac-man.spec
+	@cp config.json dist/config.json
 
 run:	install
 	uv run pac-man.py config.json

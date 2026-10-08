@@ -17,36 +17,57 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = Path(__file__).resolve().parent
 
+# remember original cwd so user-supplied relative paths resolve as expected
+ORIGINAL_CWD = Path.cwd()
+
 import os
 os.chdir(BASE_DIR)
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 
+def app_dir() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent
+
+
 def main() -> None:
     """Initialize audio, display window, configuration, and main loop."""
     if len(sys.argv) == 2:
-        config_path = Path(sys.argv[1])
+        raw = Path(sys.argv[1])
+        config_path = (ORIGINAL_CWD / raw).resolve() if not raw.is_absolute() else raw.resolve()
+
         if config_path.suffix.lower() != ".json":
             print(f"Error: '{config_path}' is not a .json file",
                   file=sys.stderr)
             sys.exit(1)
 
+        if not config_path.exists() or not config_path.is_file():
+            print(f"Error: Could not find '{config_path}'", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            cfg = config_parser.load_config(str(config_path))
+        except config_parser.ConfigError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+
     elif len(sys.argv) == 1:
-        config_path = BASE_DIR / "config.json"
+        cfg = config_parser.Config(
+            levels=c.MAX_LEVELS,
+            lives=c.PLAYER_LIVES,
+            points_per_pacgum=c.SCORE_PELLET,
+            points_per_super_pacgum=c.SCORE_POWER_PELLET,
+            points_per_ghost=c.SCORE_GHOST,
+            seed=c.FIXED_FIRST_SEED,
+            level_max_time=c.LEVEL_TIME_LIMIT,
+            cheats=c.CHEATS_ENABLED,
+        )
     else:
-        print("usage: python3 main.py [config.json]", file=sys.stderr)
+        print("usage: pac-man [config.json]", file=sys.stderr)
         sys.exit(1)
 
-    if not config_path.exists():
-        print(f"Error: Could not find '{config_path}'", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        cfg = config_parser.load_config(str(config_path))
-    except config_parser.ConfigError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
     cfg.apply()
 
     pygame.mixer.pre_init(44100, -16, 2, 2048)
