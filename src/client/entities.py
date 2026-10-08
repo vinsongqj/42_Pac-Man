@@ -418,7 +418,10 @@ class Pinky(Ghost):
 
 
 class Inky(Ghost):
-    """Cyan ghost implementation targeting player position."""
+    """
+    Cyan ghost implementation target is a doubled vector between
+    Blinky and the cell to steps ahead of player
+    """
 
     def __init__(self, pos: Vector2, ghost: Ghost) -> None:
         super().__init__("cyan", pos)
