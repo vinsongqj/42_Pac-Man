@@ -1,16 +1,8 @@
 """Main application entry point for launching the Pac-Man game client."""
 
+import os
 import sys
 from pathlib import Path
-import pygame
-import src.client.audio as audio
-import src.client.constants as c
-from src.client import config_parser
-from src.client.scenes import (
-    SceneState, SceneManager,
-    MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
-    JumpscareScene,
-)
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(getattr(sys, "_MEIPASS", "."))
@@ -20,16 +12,19 @@ else:
 # remember original cwd so user-supplied relative paths resolve as expected
 ORIGINAL_CWD = Path.cwd()
 
-import os
 os.chdir(BASE_DIR)
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-
-def app_dir() -> Path:
-    if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent
-    return Path(__file__).resolve().parent
+import pygame
+import src.client.audio as audio
+import src.client.constants as c
+from src.client import config_parser
+from src.client.scenes import (
+    SceneState, SceneManager,
+    MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
+    JumpscareScene,
+)
 
 
 def main() -> None:

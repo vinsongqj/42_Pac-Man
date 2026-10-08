@@ -43,10 +43,6 @@ class GameState:
         self._level_start_score: int = 0
         self._ghost_combo: int = 0
         self._won = False
-        self.eaten_dots: int = 0
-        self.eaten_energizers: int = 0
-        self.eaten_pellets: set[Vector2] = set()
-        self.eaten_power_pellets: set[Vector2] = set()
         self._next_level()
 
     @property
@@ -154,16 +150,14 @@ class GameState:
                                              self._level_number - 1)
         self._player.home = self.level.player_start
         self._player.teleport_home()
-        blinky = Blinky(Vector2(0, 0))
+        blinky = Blinky(self.level.ghost_starts[0])
         self.ghosts = [
             blinky,
-            Pinky(Vector2(self.level.width - 1, 0)),
-            Inky(Vector2(self.level.width - 1, self.level.height - 1), blinky),
-            Clyde(Vector2(0, self.level.height - 1))
+            Pinky(self.level.ghost_starts[1]),
+            Inky(self.level.ghost_starts[2], blinky),
+            Clyde(self.level.ghost_starts[3])
         ]
         self._player.deenergize()
-        self.eaten_pellets = set()
-        self.eaten_power_pellets = set()
 
     def advance_level(self) -> None:
         """Normal progression after clearing a level (not a cheat)."""
@@ -201,14 +195,13 @@ class GameState:
         self.level = self.generator.generate(c.FIXED_FIRST_SEED +
                                              self._level_number - 1)
         self._player = Player(self.level.player_start)
+        blinky = Blinky(self.level.ghost_starts[0])
         self.ghosts = [
-            Blinky(Vector2(0, 0)),
-            Pinky(Vector2(self.level.width - 1, 0)),
-            Inky(Vector2(self.level.width - 1, self.level.height - 1)),
-            Clyde(Vector2(0, self.level.height - 1))
+            blinky,
+            Pinky(self.level.ghost_starts[1]),
+            Inky(self.level.ghost_starts[2], blinky),
+            Clyde(self.level.ghost_starts[3])
         ]
-        self.eaten_pellets = set()
-        self.eaten_power_pellets = set()
 
     def tick(self) -> None:
         """Execute single frame update step processing timing, input,
@@ -256,7 +249,7 @@ class GameState:
                         self.player.teleport_home()
 
         if self.player.cell in self.level.pellets:
-            if (self.player.pos.distance_to(self.player.cell)) < 0.25:
+            if self.player.pos.distance_to(self.player.cell) < 0.25:
                 self.level.pellets.remove(self.player.cell)
                 audio.play("chomp", only_if_idle=True)
                 self.score += c.SCORE_PELLET

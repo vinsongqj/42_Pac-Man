@@ -154,7 +154,7 @@ class Player(Entity):
         self._energizer_timer: int = 0
         self._time_since_last_death: int = 0
         self._last_cell: Vector2 = self.cell
-        self._remaining_lives: int = 3
+        self._remaining_lives: int = c.PLAYER_LIVES
         self._is_invincible = False
         self._ghosts_eaten = 0
 
@@ -184,10 +184,7 @@ class Player(Entity):
     @property
     def is_invincible(self) -> bool:
         """Check whether the player is immune to ghost collisions."""
-        if self._time_since_last_death < 3 * c.FPS:
-            return True
-        else:
-            return self._is_invincible
+        return self._time_since_last_death < 3 * c.FPS or self._is_invincible
 
     def toggle_invincibility(self) -> None:
         """Toggle manual invincibility state."""
@@ -284,7 +281,6 @@ class Ghost(Entity, ABC):
         super().__init__(pos)
         self._name: str = name
         self._reviving_timer: int = 0
-        self._path: list[Vector2] = []
 
     @property
     def is_eaten(self) -> bool:
