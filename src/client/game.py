@@ -160,6 +160,7 @@ class GameState:
             Inky(Vector2(self.level.width - 1, self.level.height - 1)),
             Clyde(Vector2(0, self.level.height - 1))
         ]
+        self._player.deenergize()
         self.eaten_pellets = set()
         self.eaten_power_pellets = set()
 

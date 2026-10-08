@@ -167,6 +167,9 @@ class Player(Entity):
         """Activate energized power state."""
         self._energizer_timer = int(c.ENERGIZER_TIME * c.FPS)
 
+    def deenergize(self) -> None:
+        self._energizer_timer = 0
+
     def increase_ghosts_eaten(self) -> None:
         """Increment count of eaten ghosts; grants extra lives periodically."""
         self._ghosts_eaten += 1
