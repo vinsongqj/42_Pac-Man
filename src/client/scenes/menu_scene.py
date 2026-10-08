@@ -84,6 +84,34 @@ class MenuScene(Scene):
             "ENTER TO SELECT   ESC TO CANCEL", 20, HINT_COLOR,
             (rect.centerx, opt_y + 30), anchor="center"
         )
+        self._build_rules(rect.centerx, opt_y + 100)
+
+    def _build_rules(self, center_x: int, top_y: int) -> None:
+        """Build the gameplay rules shown under the quit menu.
+
+        Values come from constants so they match config.json overrides.
+
+        Args:
+            center_x: Horizontal center of the rules block.
+            top_y: Vertical position of the section title.
+        """
+        rules = [
+            f"- CLEAR ALL PELLETS TO FINISH A LEVEL ({c.MAX_LEVELS} TO WIN)",
+            f"- YOU GET {c.PLAYER_LIVES} LIVES EACH LEVEL",
+            f"- {c.LEVEL_TIME_LIMIT} SECONDS PER LEVEL",
+            "- PACGUMS IN THE CORNERS OF THE MAZE LET YOU EAT GHOSTS",
+            "- EACH GHOST IN A ROW IS WORTH DOUBLE THE LAST",
+            "- 8 GHOSTS EATEN RESTORES 1 HP",
+        ]
+        self._rules_title_text = display.Text(
+            "HOW TO PLAY", 24, c.PLAYER_COLOR, (center_x, top_y),
+            anchor="center"
+        )
+        self._rules_texts = [
+            display.Text(line, 20, (200, 200, 200),
+                         (center_x, top_y + 45 + i * 30), anchor="center")
+            for i, line in enumerate(rules)
+        ]
 
     def _build_scores(self) -> None:
         """Build rendered text labels for high scores table."""
@@ -230,3 +258,6 @@ class MenuScene(Scene):
                 (highlighted if i == self._quit_selected
                  else normal).draw(surface)
             self._quit_hint_text.draw(surface)
+            self._rules_title_text.draw(surface)
+            for line in self._rules_texts:
+                line.draw(surface)

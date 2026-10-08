@@ -424,7 +424,7 @@ class Inky(Ghost):
         self._ghost = ghost
 
     def _get_target_pos(self, player: Player) -> Vector2:
-        return (self._ghost.pos + 
+        return (self._ghost.pos +
                 2 * (player.pos + player.direction * 2 - self._ghost.pos))
 
 

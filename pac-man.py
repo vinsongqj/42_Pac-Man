@@ -3,6 +3,15 @@
 import os
 import sys
 from pathlib import Path
+import pygame
+import src.client.audio as audio
+import src.client.constants as c
+from src.client import config_parser
+from src.client.scenes import (
+    SceneState, SceneManager,
+    MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
+    JumpscareScene,
+)
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(getattr(sys, "_MEIPASS", "."))
@@ -16,22 +25,13 @@ os.chdir(BASE_DIR)
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-import pygame
-import src.client.audio as audio
-import src.client.constants as c
-from src.client import config_parser
-from src.client.scenes import (
-    SceneState, SceneManager,
-    MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
-    JumpscareScene,
-)
-
 
 def main() -> None:
     """Initialize audio, display window, configuration, and main loop."""
     if len(sys.argv) == 2:
         raw = Path(sys.argv[1])
-        config_path = (ORIGINAL_CWD / raw).resolve() if not raw.is_absolute() else raw.resolve()
+        config_path = ((ORIGINAL_CWD / raw).resolve() if not raw.is_absolute()
+                       else raw.resolve())
 
         if config_path.suffix.lower() != ".json":
             print(f"Error: '{config_path}' is not a .json file",
