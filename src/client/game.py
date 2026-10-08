@@ -36,7 +36,6 @@ class GameState:
         self.generator = LevelGenerator(size)
         self._level_number = 0
         self._level: Level
-        # ensure _player exists before calling _next_level()
         self._player: Player = Player(Vector2(0, 0))
         self.ghosts: list[Ghost]
         self.score: int = 0
@@ -258,8 +257,7 @@ class GameState:
             if (self.player.pos.distance_to(self.player.cell)) < 0.25:
                 self.level.pellets.remove(self.player.cell)
                 audio.play("chomp", only_if_idle=True)
-                if not self._allow_cheats:
-                    self.score += c.SCORE_PELLET
+                self.score += c.SCORE_PELLET
         if self.player.cell in self.level.power_pellets:
             self.level.power_pellets.remove(self.player.cell)
             audio.play("power")
