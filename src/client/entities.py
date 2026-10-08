@@ -295,7 +295,7 @@ class Ghost(Entity, ABC):
     def is_eaten(self, value: bool) -> None:
         """Set ghost eaten status, triggering revive timer duration."""
         if value:
-            self._reviving_timer = int(10 * c.FPS)
+            self._reviving_timer = int(c.GHOST_REVIVING_TIMER * c.FPS)
         else:
             self._reviving_timer = 0
 
@@ -420,11 +420,13 @@ class Pinky(Ghost):
 class Inky(Ghost):
     """Cyan ghost implementation targeting player position."""
 
-    def __init__(self, pos: Vector2) -> None:
+    def __init__(self, pos: Vector2, ghost: Ghost) -> None:
         super().__init__("cyan", pos)
+        self._ghost = ghost
 
     def _get_target_pos(self, player: Player) -> Vector2:
-        return player.pos
+        return (self._ghost.pos + 
+                2 * (player.pos + player.direction * 2 - self._ghost.pos))
 
 
 class Clyde(Ghost):

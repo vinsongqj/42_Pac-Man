@@ -154,10 +154,11 @@ class GameState:
                                              self._level_number - 1)
         self._player.home = self.level.player_start
         self._player.teleport_home()
+        blinky = Blinky(Vector2(0, 0))
         self.ghosts = [
-            Blinky(Vector2(0, 0)),
+            blinky,
             Pinky(Vector2(self.level.width - 1, 0)),
-            Inky(Vector2(self.level.width - 1, self.level.height - 1)),
+            Inky(Vector2(self.level.width - 1, self.level.height - 1), blinky),
             Clyde(Vector2(0, self.level.height - 1))
         ]
         self._player.deenergize()
