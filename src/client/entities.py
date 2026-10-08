@@ -56,6 +56,14 @@ class Entity(ABC):
         """Get home/spawn position coordinates."""
         return self._home
 
+    @home.setter
+    def home(self, value: Vector2) -> None:
+        """Set new home."""
+        if isinstance(value, Vector2):
+            self._home = value
+        else:
+            raise TypeError("home must be an instance of Vector2")
+
     @property
     def last_move(self) -> Vector2:
         """Get vector direction from the most recent move step."""

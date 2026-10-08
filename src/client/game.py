@@ -36,7 +36,8 @@ class GameState:
         self.generator = LevelGenerator(size)
         self._level_number = 0
         self._level: Level
-        self._player: Player
+        # ensure _player exists before calling _next_level()
+        self._player: Player = Player(Vector2(0, 0))
         self.ghosts: list[Ghost]
         self.score: int = 0
         self.killed_by: Optional[Ghost] = None
@@ -145,10 +146,23 @@ class GameState:
     def _next_level(self) -> None:
         """Advance to the next level and rebuild the surrounding game state."""
         self._timer = c.FPS * c.LEVEL_TIME_LIMIT
+        self._stop_frightened_audio(resume_game_music=True)
+        self._ticks = 0
         self._level_number += 1
         self._level_start_score = self.score
-        self._reset_level()
         self.paused = True
+        self.level = self.generator.generate(c.FIXED_FIRST_SEED +
+                                             self._level_number - 1)
+        self._player.home = self.level.player_start
+        self._player.teleport_home()
+        self.ghosts = [
+            Blinky(Vector2(0, 0)),
+            Pinky(Vector2(self.level.width - 1, 0)),
+            Inky(Vector2(self.level.width - 1, self.level.height - 1)),
+            Clyde(Vector2(0, self.level.height - 1))
+        ]
+        self.eaten_pellets = set()
+        self.eaten_power_pellets = set()
 
     def advance_level(self) -> None:
         """Normal progression after clearing a level (not a cheat)."""
@@ -156,7 +170,7 @@ class GameState:
 
     def next_level(self) -> None:
         """Cheat: skip to the next level."""
-        if self._allow_cheats and self._level_number < c.MAX_LEVELS:
+        if self._allow_cheats:
             self._next_level()
 
     def restart_current_level(self) -> None:
