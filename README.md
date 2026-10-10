@@ -192,3 +192,4 @@ gantt
 ## Resources
 
 ## Disclosure of AI Usage
+Claude was used to learn more in-depth Object-Oriented Programming implementation like composition to further improve the structure of the project. It was also used for error handling, finding edge cases and creating boilerplate structure to further improve upon. Gemini was used for simple tasks like docstrings.
