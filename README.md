@@ -12,7 +12,7 @@ It supports:
 *  A high-score system 
 *  A polished graphical UI with main menu, game view, and game-over handling.
 *  A cheat mode for evaluation purposes.
-*  Deployment to a public gaming platform (Itch.io) for demonstration [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
+*  Deployment to a public gaming platform (Itch.io) for demonstration.  [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
 
 ### Highscore
 
