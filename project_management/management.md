@@ -1,4 +1,11 @@
-# Gantt chart
+*This project has been created as part of the 42 curriculum by afomin, vgoh*
+
+# Project Management
+This document details how our project management strategy for the 42 Pac-Man project. Besides using the methods below to keep track of progress, we used Discord for communication and liaised in person about any new developments.
+
+## Gantt chart
+
+This Gantt chart displays our project timeline.
 
 ```mermaid
 %%{init: {'theme': 'default'}}%%
@@ -35,6 +42,8 @@ gantt
     Package Game                :done, af10, 2026-10-08, 2d
 ```
 
-# Kanban Board (Jira)
+## Kanban Board (Jira)
+
+Throughout the entire project duration, we used a Jira kanban board to keep track of each others' progress.
 
 ![alt text](image.png)
