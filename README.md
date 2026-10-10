@@ -191,5 +191,12 @@ gantt
 ```
 ## Resources
 
+* [Original Pac-Man gameplay](https://youtu.be/dScq4P5gn4A)
+* [Piskel (Used to design the sprites)](https://www.piskelapp.com/)
+* [ArjanCodes - Composition is Better Than Inheritance in Python](https://youtu.be/0mcP8ZpUR38?si=d0Ay_6RgBRj8pwXq)
+* [Clear Code - The ultimate introduction to Pygame](https://youtu.be/AY9MnQ4x3zk?si=hezv1FgP2Fz5Nanf)
+* [The Sounds Resource - Pac-Man SFX](https://sounds.spriters-resource.com/arcade/pacman/asset/404131/)
+
+
 ## Disclosure of AI Usage
 Claude was used to learn more in-depth Object-Oriented Programming implementation like composition to further improve the structure of the project. It was also used for error handling, finding edge cases and creating boilerplate structure to further improve upon. Gemini was used for simple tasks like docstrings.
