@@ -9,10 +9,10 @@
 It supports:
 *  A custom configuration via a file (JSON with comments) to set game parameters.
 *  Level generation based on an external ‘A-Maze-ing‘ package provided by our peers.
-*  A high-score system (stored in a database). # Specify more here later Alex
+*  A high-score system 
 *  A polished graphical UI with main menu, game view, and game-over handling.
 *  A cheat mode for evaluation purposes.
-*  Deployment to a public gaming platform (Itch.io) for demonstration.
+*  Deployment to a public gaming platform (Itch.io) for demonstration [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
 
 ### Highscore
 
