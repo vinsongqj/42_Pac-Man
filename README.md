@@ -32,21 +32,10 @@ Otherwise, if you would like to run the program manually, you may follow the ste
 1. Install the dependencies with `uv sync`.
 2. Run the program with `uv run pac-man.py config.json`.
 
-### Configuration
+## Configuration
 
 The game reads a JSON config file:
 `uv run python3 pacman.py config.json`
-
-| Key | Description | Type |
-| -------- | -------- | -------- |
-| `levels`  | Number of levels to clear  | int (defaults to 3)  |
-| `lives`  | Number of lives per level  | int (defaults to 3) |
-| `points_per_pacgum` | Number of points per pacgum | int (defaults to 10) |
-| `points_per_super_pacgum`  | Number of points per super pacgum | int (defaults to 50) |
-| `points_per_ghost`  | Base points per ghost (doubles per consecutive ghost) | int (defaults to 200) |
-| `seed`  | Seed of the first level  | int (defaults to 42)  |
-| `level_max_time`  | Seconds allowed per level  | int (defaults to 90)  |
-| `cheats`  | Toggles cheat mode on or off  | bool (defaults to false)  |
 
 ```json
 {
@@ -60,6 +49,18 @@ The game reads a JSON config file:
   "cheats": false
 }
 ```
+
+| Key | Description | Type |
+| -------- | -------- | -------- |
+| `levels`  | Number of levels to clear  | int (defaults to 3)  |
+| `lives`  | Number of lives per level  | int (defaults to 3) |
+| `points_per_pacgum` | Number of points per pacgum | int (defaults to 10) |
+| `points_per_super_pacgum`  | Number of points per super pacgum | int (defaults to 50) |
+| `points_per_ghost`  | Base points per ghost (doubles per consecutive ghost) | int (defaults to 200) |
+| `seed`  | Seed of the first level  | int (defaults to 42)  |
+| `level_max_time`  | Seconds allowed per level  | int (defaults to 90)  |
+| `cheats`  | Toggles cheat mode on or off  | bool (defaults to false)  |
+
 The parser supports #, // and /* ... */ comments. You may change the values of the keys however you see fit.
 
 ### Highscore
