@@ -7,10 +7,10 @@
 42 Pac-Man is a project to recreate the popular game in Python, using object-oriented programming, a simple graphical library (pygame in our case), and a modular, reusable architecture. 
 
 It supports:
-*  A custom configuration via a file (JSON with comments) to set game parameters.
-*  Level generation based on an external ‘A-Maze-ing‘ package provided by our peers.
+*  A custom configuration via a JSON file to set game parameters.
+*  Level generation based on an external `mazegenerator` package provided by our peers.
 *  A high-score system 
-*  A polished graphical UI with main menu, game view, and game-over handling.
+*  Graphical UI with main menu, game view, and game-over handling.
 *  A cheat mode for evaluation purposes.
 *  Deployment to a public gaming platform (Itch.io) for demonstration.  [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
 
@@ -100,6 +100,18 @@ MazeGenerator(size=(15, 15), perfect=False, seed=seed).generate(seed)
 The result is a list of integers, each representing a bitmask of an individual cell's walls (`NORTH=1, EAST=2, SOUTH=4, WEST=8`). A value of 15 means all four walls are up, so the cell is closed off and unwalkable. The maze has a `perfect=False` flag set to allow loops to prevent dead ends that make the game unplayable. The same seed will always give the same sequence of levels. `Level.can_move(a, b)` checks the wall bits between adjacent cells, and `Level.bfs(a, b)` finds shortest paths for ghost navigation.
 
 ## Implementation
+
+* **Game loop** - A loop runs at 60 FPS. Speeds are in cells per second and converted to a per-tick step. All timers count ticks, so the simulation is deterministic. The trade-off is that the game slows down if the frame rate drops.
+* **Movement** - Entities have float positions in grid coordinates, and their cell is `round(pos)`. They can only turn when aligned with a cell center (within half a step), where the position snaps to the cell.
+* **Walls**- Each cell is a bitmask (N=1, E=2, S=4, W=8), and 15 means a closed cell. `Level.can_move(a, b)` checks bounds and the wall bit on the source cell. Each tick, an entity moves only if the step half a cell ahead is open.
+* **Input buffering** - The player’s `pending_direction` is adopted at the next aligned tick where it is open, so early key presses still turn. A direct reversal applies immediately.
+* **Ghost AI** - Ghosts decide only when aligned at a junction or wall. Candidate directions exclude walls and the reverse (except for eaten ghosts). Each ghost type computes a target, and eaten ghosts target home. `Level.bfs` finds the path, and the ghost picks the direction whose neighbor cell is closest to the path’s first step. Each search is O(width × height), which is cheap on a 15×15 maze. While the player is energized, ghosts skip the search and move randomly.
+* **Game state** - `GameState.tick()` runs in a fixed order: timers, level-complete check, entities, ghost collisions, pellets. Collisions use a 0.25-cell distance threshold, so crossing entities aren’t missed. Pellets are `set[Vector2]`. Only GameState changes the rules (score, lives, game over), and cheat keybinds are unusable when cheat mode is off.
+* **Rendering** - Walls are drawn once per level to a cached surface. Images are cached by (path, size, smooth) and rotated sprites by (path, angle). Pac-Man uses one frame set rotated to his direction. Ghost sprites switch frame sets by state. A missing image falls back to a placeholder instead of crashing.
+* **Scenes** - Each scene returns a `SceneState` or `(SceneState, kwargs)`. `SceneManager` switches and passes the `kwarg`s to `on_enter`, which hands the running game and graphics between gameplay and pause without globals.
+* **Config** - `strip_comments` is a character-level state machine that ignores comment characters inside strings. `json.loads` uses hooks to reject duplicate keys and `NaN`/Infinity. Validation is table-driven (key -> constant and range), and errors are reported together. Values are applied with `setattr` on constants, since other modules read `c.NAME` at use time.
+* **Leaderboard** - All `urllib` requests run on daemon threads, with a lock around shared state and a `_fetching` flag to prevent duplicate fetches. A `version` counter lets the menu rebuild its table only when the data changed. If failures are caught the status is set to offline.
+* **Audio** - Sound variants rotate with `itertools.cycle`, and `only_if_idle` stops the chomp from overlapping itself. The current music track is tracked so re-requesting it doesn’t restart it, which lets the main track resume after the frightened track.
 
 ## General Software Architecture
 ```mermaid
