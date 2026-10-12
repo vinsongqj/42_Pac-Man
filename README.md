@@ -14,11 +14,6 @@ It supports:
 *  A cheat mode for evaluation purposes.
 *  Deployment to a public gaming platform (Itch.io) for demonstration.  [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
 
-### Highscore
-
-### Maze Generation
-
-### Implementation
 
 ## Instructions
 
@@ -38,6 +33,40 @@ Otherwise, if you would like to run the program manually, you may follow the ste
 2. Run the program with `uv run pac-man.py config.json`.
 
 ### Configuration
+
+The game reads a JSON config file:
+`uv run python3 pacman.py config.json`
+
+| Key | Description | Type |
+| -------- | -------- | -------- |
+| `levels`  | Number of levels to clear  | int (defaults to 3)  |
+| `lives`  | Number of lives per level  | int (defaults to 3) |
+| `points_per_pacgum` | Number of points per pacgum | int (defaults to 10) |
+| `points_per_super_pacgum`  | Number of points per super pacgum | int (defaults to 50) |
+| `points_per_ghost`  | Base points per ghost (doubles per consecutive ghost) | int (defaults to 200) |
+| `seed`  | Seed of the first level  | int (defaults to 42)  |
+| `level_max_time`  | Seconds allowed per level  | int (defaults to 90)  |
+| `cheats`  | Toggles cheat mode on or off  | bool (defaults to false)  |
+
+```json
+{
+  "levels": 3,
+  "lives": 3,
+  "points_per_pacgum": 10,
+  "points_per_super_pacgum": 50,
+  "points_per_ghost": 200,
+  "seed": 42,
+  "level_max_time": 90,
+  "cheats": false
+}
+```
+The parser supports #, // and /* ... */ comments. You may change the values of the keys however you see fit.
+
+### Highscore
+
+### Maze Generation
+
+### Implementation
 
 ### General Software Architecture
 ```mermaid
