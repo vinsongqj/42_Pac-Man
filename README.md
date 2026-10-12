@@ -4,7 +4,7 @@
 
 ## Description
 
-42 Pac-Man is a project to recreate the popular game in Python, using object-oriented programming, a simple graphical library (pygame in our case), and a modular, reusable architecture. 
+42 Pac-Man is a project to recreate the popular game in Python, using object-oriented programming, a simple graphical library (Pygame in our case), and a modular, reusable architecture. 
 
 It supports:
 *  A custom configuration via a JSON file to set game parameters.
