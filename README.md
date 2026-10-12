@@ -14,6 +14,7 @@ It supports:
 *  A cheat mode for evaluation purposes.
 *  Deployment to a public gaming platform (Itch.io) for demonstration.  [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
 
+Gameplay loop: Main menu -> Gameplay -> Game over/Victory -> Key in username to save highscore -> Return to main menu/Replay game
 
 ## Instructions
 
@@ -21,6 +22,7 @@ A Makefile has been provided for convenience. You may choose to run the followin
 
 ```bash
 make install       # Installs the dependencies required
+make build         # Builds a binary of the game with PyInstaller
 make run           # Runs the game
 make debug         # Debugs the program with python debugger
 make lint          # Runs mypy and flake8 linting tests
@@ -32,7 +34,11 @@ Otherwise, if you would like to run the program manually, you may follow the ste
 1. Install the dependencies with `uv sync`.
 2. Run the program with `uv run pac-man.py config.json`.
 
-## Configuration
+To package the game into an executable binary:
+1. Run `make build`. The binary will be built in the `dist/` directory at the repository root.
+2. Run the binary with just `./pac-man` or with an optional `config.json` argument.
+
+### Configuration
 
 The game reads a JSON config file:
 `uv run python3 pacman.py config.json`
@@ -63,6 +69,17 @@ The game reads a JSON config file:
 
 The parser supports `#`, `//` and `/* ... */` comments. You may change the values of the keys however you see fit.
 
+### Cheat Mode
+Cheat mode was created to allow evaluators to test out features during project evaluations. To toggle cheat mode on, set `"cheats": true` in config.json. When playing the game there are keybinds to toggle multiple cheats:
+
+- `F` to freeze the ghosts.
+- `P` to pause the timer.
+- `T` to add a life.
+- `I` to toggle invincibility.
+- `N` to skip to the next level.
+
+**High scores are not saved in cheat mode.**
+
 ## Highscore
 
 Highscores are stored on a remote leaderboard server. The client uses two endpoints:
@@ -72,7 +89,7 @@ Highscores are stored on a remote leaderboard server. The client uses two endpoi
 
 The `ScoreBoard` class handles all of this. Every request runs in a background thread, so the menu never freezes while waiting on the network. A version counter increases whenever the data changes, so the menu only rebuilds its leaderboard display when something changes. The board has three states, loading, ready and offline, and the menu shows “LOADING SCORES...”, the table, or “SCORES UNAVAILABLE” depending on the state. If the server is unreachable, the game is still playable. After a successful submission the board refetches, so the new score appears right away.
 
-Additionally, scores are never submitted in cheat mode, names must be at least 3 characters, and negative scores are rejected.
+Additionally, names must be at least 3 characters, and negative scores are rejected.
 
 ## Maze Generation
 
@@ -208,6 +225,7 @@ We mostly liaised in person and online via Discord, and we used Jira to keep tra
 * [ArjanCodes - Composition is Better Than Inheritance in Python](https://youtu.be/0mcP8ZpUR38?si=d0Ay_6RgBRj8pwXq)
 * [Clear Code - The ultimate introduction to Pygame](https://youtu.be/AY9MnQ4x3zk?si=hezv1FgP2Fz5Nanf)
 * [The Sounds Resource - Pac-Man SFX](https://sounds.spriters-resource.com/arcade/pacman/asset/404131/)
+*  Assets and sprites were drawn by vgoh and gameplay BGM was composed by afomin.
 
 ## Disclosure of AI Usage
 Claude was used to learn more in-depth Object-Oriented Programming implementation like composition to further improve the structure of the project. It was also used for error handling, finding edge cases and creating boilerplate structure to further improve upon. Gemini was used for simple tasks like docstrings.
