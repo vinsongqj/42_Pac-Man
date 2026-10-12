@@ -65,6 +65,15 @@ The parser supports `#`, `//` and `/* ... */` comments. You may change the value
 
 ## Highscore
 
+Highscores are stored on a remote leaderboard server. The client uses two endpoints:
+
+* `GET /leaderboard?size=10` fetches the top 10 entries (name and best score).
+* `PUT /user?name=<name>&newScore=<score>` submits a score.
+
+The `ScoreBoard` class handles all of this. Every request runs in a background thread, so the menu never freezes while waiting on the network. A version counter increases whenever the data changes, so the menu only rebuilds its leaderboard display when something changes. The board has three states, loading, ready and offline, and the menu shows “LOADING SCORES...”, the table, or “SCORES UNAVAILABLE” depending on the state. If the server is unreachable, the game is still playable. After a successful submission the board refetches, so the new score appears right away.
+
+Additionally, scores are never submitted in cheat mode, names must be at least 3 characters, and negative scores are rejected.
+
 ## Maze Generation
 
 The maze generation is done via an existing `mazegenerator` package created by our peers at 42. The `LevelGenerator` class wraps around it:
