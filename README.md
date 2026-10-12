@@ -61,7 +61,7 @@ The game reads a JSON config file:
 | `level_max_time`  | Seconds allowed per level  | int (defaults to 90)  |
 | `cheats`  | Toggles cheat mode on or off  | bool (defaults to false)  |
 
-The parser supports #, // and /* ... */ comments. You may change the values of the keys however you see fit.
+The parser supports `#`, `//` and `/* ... */` comments. You may change the values of the keys however you see fit.
 
 ### Highscore
 
