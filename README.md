@@ -9,7 +9,7 @@
 It supports:
 *  A custom configuration via a JSON file to set game parameters.
 *  Level generation based on an external `mazegenerator` package provided by our peers.
-*  A high-score system 
+*  A high-score system where highscores are stored in a remote PostgreSQL database.
 *  Graphical UI with main menu, game view, and game-over handling.
 *  A cheat mode for evaluation purposes.
 *  Deployment to a public gaming platform (Itch.io) for demonstration.  [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
@@ -111,6 +111,7 @@ The result is a list of integers, each representing a bitmask of an individual c
 * **Scenes** - Each scene returns a `SceneState` or `(SceneState, kwargs)`. `SceneManager` switches and passes the `kwarg`s to `on_enter`, which hands the running game and graphics between gameplay and pause without globals.
 * **Config** - `strip_comments` is a character-level state machine that ignores comment characters inside strings. `json.loads` uses hooks to reject duplicate keys and `NaN`/Infinity. Validation is table-driven (key -> constant and range), and errors are reported together. Values are applied with `setattr` on constants, since other modules read `c.NAME` at use time.
 * **Leaderboard** - All `urllib` requests run on daemon threads, with a lock around shared state and a `_fetching` flag to prevent duplicate fetches. A `version` counter lets the menu rebuild its table only when the data changed. If failures are caught the status is set to offline.
+* **Scores** Scores are stored in a PostgreSQL database and accessed via a remote server written with C#, ASP.NET (endpoints and requests) and EFCore (data access layer).
 * **Audio** - Sound variants rotate with `itertools.cycle`, and `only_if_idle` stops the chomp from overlapping itself. The current music track is tracked so re-requesting it doesn’t restart it, which lets the main track resume after the frightened track.
 
 ## General Software Architecture
