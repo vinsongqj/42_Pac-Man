@@ -1,13 +1,13 @@
-"""Main application entry point for launching the Pac-Man game client."""
+"""Main application entry point for launching the Pac-Man game """
 
 import os
 import sys
 from pathlib import Path
 import pygame
-import src.client.audio as audio
-import src.client.constants as c
-from src.client import config_parser
-from src.client.scenes import (
+import src.audio as audio
+import src.constants as c
+from src import config_parser
+from src.scenes import (
     SceneState, SceneManager,
     MenuScene, GameScene, PauseScene, GameOverScene, VictoryScene,
     JumpscareScene,

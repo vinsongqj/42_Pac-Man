@@ -19,21 +19,12 @@ debug:
 clean:
 	@find . -type d -name __pycache__ -exec rm -rf {} +
 	@find . -type d -name .mypy_cache -exec rm -rf {} +
-	@rm -rf venv .venv build dist
+	@rm -rf venv .venv build dist highscores.json
 
 lint:
 	@flake8 . --exclude=./venv,venv,*/venv/*,.venv
-	@mypy --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --exclude '^venv/' --explicit-package-bases src/client pac-man.py
+	@mypy --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --exclude '^venv/' --explicit-package-bases src pac-man.py
 
 lint-strict:
 	@flake8 . --exclude=./venv,venv,*/venv/*,.venv
-	@mypy --strict --exclude='^venv/' --explicit-package-bases src/client pac-man.py
-
-help:
-	@echo "Available commands:"
-	@echo "   install     - Install dependencies"
-	@echo "   run         - Run the game"
-	@echo "   debug       - Run in debug mode"
-	@echo "   clean       - Remove all build files"
-	@echo "   lint        - Run flake8 and mypy linters"
-	@echo ""
+	@mypy --strict --exclude='^venv/' --explicit-package-bases src pac-man.py

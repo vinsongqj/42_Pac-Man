@@ -9,7 +9,7 @@
 It supports:
 *  A custom configuration via a JSON file to set game parameters.
 *  Level generation based on an external `mazegenerator` package provided by our peers.
-*  A high-score system where highscores are stored in a remote PostgreSQL database.
+*  A local high-score system where the top 10 scores are saved to a `highscores.json` file (no network needed).
 *  Graphical UI with main menu, game view, and game-over handling.
 *  A cheat mode for evaluation purposes.
 *  Deployment to a public gaming platform (Itch.io) for demonstration.  [Click here to view](https://gr0k.itch.io/42-pac-man) (Password: 42kl).
@@ -41,7 +41,7 @@ To package the game into an executable binary:
 ### Configuration
 
 The game reads a JSON config file:
-`uv run python3 pacman.py config.json`
+`uv run python3 pac-man.py config.json`
 
 ```json
 {
@@ -82,14 +82,17 @@ Cheat mode was created to allow evaluators to test out features during project e
 
 ## Highscore
 
-Highscores are stored on a remote leaderboard server. The client uses two endpoints:
+Highscores are stored locally in a `highscores.json` file. No server or network access is needed. The file is a JSON array of objects, sorted from best to worst and limited to the top 10:
 
-* `GET /leaderboard?size=10` fetches the top 10 entries (name and best score).
-* `PUT /user?name=<name>&newScore=<score>` submits a score.
+```json
+[{"name": "ALICE", "bestScore": 5000}, {"name": "BOB", "bestScore": 300}]
+```
 
-The `ScoreBoard` class handles all of this. Every request runs in a background thread, so the menu never freezes while waiting on the network. A version counter increases whenever the data changes, so the menu only rebuilds its leaderboard display when something changes. The board has three states, loading, ready and offline, and the menu shows “LOADING SCORES...”, the table, or “SCORES UNAVAILABLE” depending on the state. If the server is unreachable, the game is still playable. After a successful submission the board refetches, so the new score appears right away.
+The file is created automatically the first time a score is saved. When running from source it lives in the project root, and when running the packaged binary it lives next to the executable. Deleting it resets the leaderboard.
 
-Additionally, names must be at least 3 characters, and negative scores are rejected.
+The `ScoreBoard` class handles loading and saving. Each name keeps only its personal best, so a lower score never overwrites a higher one. Before every save the file is re-read, so outside edits are not lost, and it is written through a temporary file that then replaces the real one, so a crash cannot leave a half-written file. A version counter increases whenever the data changes, so the menu only rebuilds its leaderboard display when something changes. The board has two states, ready and offline. If the file cannot be written (for example in a read-only folder), the state becomes offline, but the game is still playable.
+
+Additionally, names must be at least 3 characters, negative or non-integer scores are rejected, and malformed entries in the file are ignored when loading. Scores are not submitted in cheat mode.
 
 ## Maze Generation
 
@@ -110,8 +113,7 @@ The result is a list of integers, each representing a bitmask of an individual c
 * **Rendering** - Walls are drawn once per level to a cached surface. Images are cached by (path, size, smooth) and rotated sprites by (path, angle). Pac-Man uses one frame set rotated to his direction. Ghost sprites switch frame sets by state. A missing image falls back to a placeholder instead of crashing.
 * **Scenes** - Each scene returns a `SceneState` or `(SceneState, kwargs)`. `SceneManager` switches and passes the `kwarg`s to `on_enter`, which hands the running game and graphics between gameplay and pause without globals.
 * **Config** - `strip_comments` is a character-level state machine that ignores comment characters inside strings. `json.loads` uses hooks to reject duplicate keys and `NaN`/Infinity. Validation is table-driven (key -> constant and range), and errors are reported together. Values are applied with `setattr` on constants, since other modules read `c.NAME` at use time.
-* **Leaderboard** - All `urllib` requests run on daemon threads, with a lock around shared state and a `_fetching` flag to prevent duplicate fetches. A `version` counter lets the menu rebuild its table only when the data changed. If failures are caught the status is set to offline.
-* **Scores** Scores are stored in a PostgreSQL database and accessed via a remote server written with C#, ASP.NET (endpoints and requests) and EFCore (data access layer).
+* **Leaderboard** - `ScoreBoard` keeps the top 10 entries in memory and persists them to `highscores.json`. `submit` re-reads the file first, updates the player's personal best, re-sorts, trims to 10 and saves atomically with a temp file and `os.replace`. Loading validates every entry (string name, non-negative integer score) and skips bad ones. A `version` counter lets the menu rebuild its table only when the data changed. If writing fails the status is set to offline instead of crashing.
 * **Audio** - Sound variants rotate with `itertools.cycle`, and `only_if_idle` stops the chomp from overlapping itself. The current music track is tracked so re-requesting it doesn’t restart it, which lets the main track resume after the frightened track.
 
 ## General Software Architecture
@@ -119,10 +121,10 @@ The result is a list of integers, each representing a bitmask of an individual c
 %% Generated by https://gitdiagram.com/vinsongqj/42_pac-man
 flowchart TD
 
-subgraph group_client_entry["Client startup"]
+subgraph group_client_entry["Game startup"]
   node_launcher["Game launcher<br/>[pac-man.py]"]
   node_config["Configuration<br/>[config_parser.py]"]
-  node_scores["High-score client<br/>[scores.py]"]
+  node_scores["High-score storage<br/>[scores.py]"]
 end
 
 subgraph group_gameplay["Gameplay runtime"]
@@ -146,16 +148,9 @@ subgraph group_screens["Scenes and presentation"]
   node_hud["Gameplay HUD<br/>[hud.py]"]
 end
 
-subgraph group_score_api["Score service"]
-  node_api["HTTP API<br/>[Program.cs]"]
-  node_orchestrator["Score orchestration<br/>[Orchestrator.cs]"]
-  node_db_manager["User data access<br/>[DbManager.cs]"]
-  node_db_context[("Database context<br/>[PacmanDb.cs]")]
-  node_user["Score user<br/>[User.cs]"]
-end
-
 node_player(("Player"))
 node_maze_package["Maze generator package"]
+node_json[("highscores.json")]
 
 node_player -->|"starts"| node_launcher
 node_launcher -->|"loads settings"| node_config
@@ -183,36 +178,26 @@ node_game_scene -->|"plays music"| node_audio
 node_game_scene -.->|"opens overlay"| node_overlays
 node_end_screens -.->|"submits score"| node_scores
 node_victory -->|"uses scores"| node_scores
-node_scores -.->|"requests scores"| node_api
-node_api -->|"routes operations"| node_orchestrator
-node_orchestrator -->|"calls data access"| node_db_manager
-node_db_manager -->|"queries and saves"| node_db_context
-node_db_manager -->|"creates and reads"| node_user
-node_db_context -->|"stores"| node_user
+node_scores -->|"reads and writes"| node_json
 
 click node_launcher "https://github.com/vinsongqj/42_pac-man/blob/main/pac-man.py"
-click node_config "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/config_parser.py"
-click node_scene_router "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/scene_utils.py"
-click node_menu "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/menu_scene.py"
-click node_game_scene "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/game_scene.py"
-click node_overlays "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/overlay.py"
-click node_end_screens "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/game_over_scene.py"
-click node_victory "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/victory_scene.py"
-click node_jumpscare "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/jumpscare_scene.py"
-click node_hud "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scenes/hud.py"
-click node_game_state "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/game.py"
-click node_actors "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/entities.py"
-click node_level "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/level.py"
-click node_vectors "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/vector2.py"
-click node_graphics "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/graphics.py"
-click node_display "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/display.py"
-click node_audio "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/audio.py"
-click node_scores "https://github.com/vinsongqj/42_pac-man/blob/main/src/client/scores.py"
-click node_api "https://github.com/vinsongqj/42_pac-man/blob/main/src/server/Pacman.Server.Api/Program.cs"
-click node_orchestrator "https://github.com/vinsongqj/42_pac-man/blob/main/src/server/Pacman.Server.Core/Orchestrator.cs"
-click node_db_manager "https://github.com/vinsongqj/42_pac-man/blob/main/src/server/Pacman.Server.Data/DbManager.cs"
-click node_db_context "https://github.com/vinsongqj/42_pac-man/blob/main/src/server/Pacman.Server.Data/PacmanDb.cs"
-click node_user "https://github.com/vinsongqj/42_pac-man/blob/main/src/server/Pacman.Server.Data/Entities/User.cs"
+click node_config "https://github.com/vinsongqj/42_pac-man/blob/main/src/config_parser.py"
+click node_scene_router "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/scene_utils.py"
+click node_menu "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/menu_scene.py"
+click node_game_scene "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/game_scene.py"
+click node_overlays "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/overlay.py"
+click node_end_screens "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/game_over_scene.py"
+click node_victory "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/victory_scene.py"
+click node_jumpscare "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/jumpscare_scene.py"
+click node_hud "https://github.com/vinsongqj/42_pac-man/blob/main/src/scenes/hud.py"
+click node_game_state "https://github.com/vinsongqj/42_pac-man/blob/main/src/game.py"
+click node_actors "https://github.com/vinsongqj/42_pac-man/blob/main/src/entities.py"
+click node_level "https://github.com/vinsongqj/42_pac-man/blob/main/src/level.py"
+click node_vectors "https://github.com/vinsongqj/42_pac-man/blob/main/src/vector2.py"
+click node_graphics "https://github.com/vinsongqj/42_pac-man/blob/main/src/graphics.py"
+click node_display "https://github.com/vinsongqj/42_pac-man/blob/main/src/display.py"
+click node_audio "https://github.com/vinsongqj/42_pac-man/blob/main/src/audio.py"
+click node_scores "https://github.com/vinsongqj/42_pac-man/blob/main/src/scores.py"
 
 classDef toneNeutral fill:#f8fafc,stroke:#334155,stroke-width:1.5px,color:#0f172a
 classDef toneBlue fill:#dbeafe,stroke:#2563eb,stroke-width:1.5px,color:#172554
@@ -224,7 +209,7 @@ classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
 class node_launcher,node_config,node_scores toneBlue
 class node_game_state,node_actors,node_level,node_vectors,node_graphics,node_display,node_audio toneAmber
 class node_scene_router,node_menu,node_game_scene,node_overlays,node_end_screens,node_victory,node_jumpscare,node_hud toneMint
-class node_api,node_orchestrator,node_db_manager,node_db_context,node_user toneRose
+class node_json toneRose
 class node_player,node_maze_package toneIndigo
 ```
 
