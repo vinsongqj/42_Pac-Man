@@ -205,7 +205,7 @@ class OverlayScene(Scene):
         )
 
     def _submit_name(self) -> None:
-        """Validate input string and upload score to online leaderboard."""
+        """Validate input string and upload score to leaderboard."""
         name = self._name.strip()
         if self.game is None:
             return

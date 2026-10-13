@@ -95,11 +95,6 @@ class ScoreBoard:
         self.refresh()
 
     @property
-    def online(self) -> bool:
-        """Whether the scores can be saved (kept for menu compatibility)."""
-        return self.status == "ready"
-
-    @property
     def entries(self) -> list[dict[str, Any]]:
         """Copy of the current entries, best score first.
 
