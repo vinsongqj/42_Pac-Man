@@ -310,7 +310,7 @@ class Ghost(Entity, ABC):
 
     @abstractmethod
     def _get_target_pos(self, player: Player) -> Vector2:
-        """Determine target tile position based on AI AI personality traits."""
+        """Determine target tile position based on AI personality traits."""
         ...
 
     def _get_directions(self, level: Level) -> list[Vector2]:

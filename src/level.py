@@ -2,7 +2,7 @@
 and collision queries."""
 
 from collections import deque
-from src.constants import UP, DOWN, LEFT, RIGHT, MAZE_SIZE
+from src.constants import MAZE_SIZE
 from mazegenerator import MazeGenerator
 from src.vector2 import Vector2
 
@@ -141,30 +141,11 @@ class Level:
         path.reverse()
         return deque(path)
 
-    def get_walkable_neighbours(self, a: Vector2) -> list[Vector2]:
-        """Retrieve neighboring cells accessible from a given position.
-
-        Args:
-            a: Source position vector.
-
-        Returns:
-            List of accessible target coordinate vectors.
-        """
-        result = []
-        for d in [DOWN, LEFT, RIGHT, UP]:
-            if self.can_move(a, a + d):
-                result.append(a + d)
-        return result
-
     def _is_walkable(self, point: Vector2) -> bool:
         """Check if grid cell is inside bounds and accessible."""
         return (0 <= point.x < self.width and
                 0 <= point.y < self.height and
                 self.maze[int(point.y)][int(point.x)] != 15)
-
-    def _is_reachable(self, point: Vector2) -> bool:
-        """Alias for checking cell walkability."""
-        return self._is_walkable(point)
 
     def _nearest_walkable(self, point: Vector2) -> Vector2:
         """Locate closest walkable tile coordinate using BFS.

@@ -26,7 +26,7 @@ class Graphics:
     @property
     def screen_size(self) -> tuple[int, int]:
         """Get window dimensions as tuple `(width, height)`."""
-        return (900, 1000)
+        return (c.WIDTH, c.HEIGHT)
 
     @property
     def offset_x(self) -> int:
